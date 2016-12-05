@@ -3,6 +3,7 @@ package javafxmain;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -29,7 +30,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -40,7 +40,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import model.bean.Infor;
+import javax.mail.Session;
 import model.bo.CheckLoginBO;
 
 /**
@@ -80,6 +80,7 @@ public class MainWindow extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
+
         //Login
         loggedIn = checkLoggedIn();
         if (loggedIn == false) {//vao giao dien loggin
@@ -94,8 +95,10 @@ public class MainWindow extends Application {
      */
     void GUIInbox() {
 
-        scene = new Scene(new VBox(), 1000, 400);
+        scene = new Scene(new VBox(), 1000, 700);
         primaryStage.setTitle("Inbox");
+        Image imgIcon = new Image(this.getClass().getResource("imgIcon.png").toString(), 20, 20, true, false);
+        primaryStage.getIcons().add(imgIcon);
 
         initUI_Menubar();
         initUI_ContentPanel();
@@ -422,8 +425,10 @@ public class MainWindow extends Application {
             @Override
             public void handle(ActionEvent e) {
                 textActiontargetLogin.setFill(Color.FIREBRICK);
-                textActiontargetLogin.setText("Sign in button pressed");
+                textActiontargetLogin.setText("Checking...");
+                btnLogin.setDisable(true);
                 doLogin(e);
+                //dbtnLogin.setDisable(false);
             }
         });
 
@@ -486,25 +491,33 @@ public class MainWindow extends Application {
      */
     public void doLogin(ActionEvent event) {
         System.out.println("ashdfashdkf");
+        Thread loginThread = new Thread(new Runnable() {
 
-        Infor infor = new CheckLoginBO().check(tfUsernameLogin.getText(), pfPasswordLogin.getText());
-        if (infor == null) {
-            //TODO: sai mat khau, hien thi texttarget
-            System.out.println("ashdfashdkf_if");
-            textActiontargetLogin.setText("Khong dung dang nhap!");
-        } else {
-            System.out.println("ashdfashdkf-else");
-            //TODO: dung mat khau: chuyen man hinh, luu thong tin
-            //dua thong tin vao Preferences
-            if (cbRememberLogin.isSelected()) {
-                pref.put("user", tfUsernameLogin.getText());
-                pref.put("pass", pfPasswordLogin.getText());
-                pref.putBoolean("loggedIn", true);
+            @Override
+            public void run() {
+
+                boolean loginOK = new CheckLoginBO().checkLoginGmail(tfUsernameLogin.getText(), pfPasswordLogin.getText());
+                if (loginOK == false) {
+                    //TODO: sai mat khau, hien thi texttarget
+                    System.out.println("ashdfashdkf_if");
+                    textActiontargetLogin.setText("Khong the dang nhap!");
+                     btnLogin.setDisable(false);
+                } else {
+                    System.out.println("ashdfashdkf-else");
+                    //TODO: dung mat khau: chuyen man hinh, luu thong tin
+                    //dua thong tin vao Preferences
+                    if (cbRememberLogin.isSelected()) {
+                        pref.put("user", tfUsernameLogin.getText());
+                        pref.put("pass", pfPasswordLogin.getText());
+                        pref.putBoolean("loggedIn", true);
+                    }
+
+                    //switch window
+                    Platform.runLater(() -> GUIInbox());
+                }
             }
-
-            //switch window
-            GUIInbox();
-        }
+        });
+        loginThread.start();
     }
 
     public static void main(String[] args) {

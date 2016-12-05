@@ -5,8 +5,8 @@
  */
 package model.bo;
 
-import model.bean.Infor;
-import model.dao.CheckLoginDAO;
+import helper.Gmail;
+import javax.mail.Session;
 
 /**
  *
@@ -14,9 +14,10 @@ import model.dao.CheckLoginDAO;
  */
 public class CheckLoginBO {
 
-    public Infor check(String id, String pass) {
-        CheckLoginDAO checkLoginDAO = new CheckLoginDAO();
-        return checkLoginDAO.check(id, pass);
+   
+
+    public boolean checkLoginGmail(String gmail, String password) {
+        return new Gmail().checkLoginGmail(gmail, password);
     }
 
 }
