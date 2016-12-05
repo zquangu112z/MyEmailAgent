@@ -23,10 +23,13 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.Separator;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -48,10 +51,11 @@ public class MainWindow extends Application {
 
     //declare comonents
     GridPane gridLogin, gridGontentPanel;//gridListBox,gridListEmail,gridQuickToolTrip
-    Text textLoginTitle, textActiontargetLogin;
+    Text textLoginTitle, textActiontargetLogin, tBoxSubject, tBoxFrom, tBoxDate;
     Text textBoxName;
     Label lbUserNameLogin, lbPasswordLogin;
     TextField tfUsernameLogin;
+    TextArea taContent;
     PasswordField pfPasswordLogin;
     Button btnLogin, btnCompose, btnReply, btnForward;
     HBox hbLogin, hbCompose, hbReply, hbForward;
@@ -59,6 +63,9 @@ public class MainWindow extends Application {
     Scene scene;
     Stage primaryStage;
 
+    //font
+    Font font20 = new Font(20);
+    Font font17 = new Font(17);
     String userName, passName;
 
     //logged in? if yes: switch to inbox interface
@@ -92,6 +99,7 @@ public class MainWindow extends Application {
 
         initUI_Menubar();
         initUI_ContentPanel();
+        initUI_BodyMail();
         primaryStage.setScene(scene);
         scene.getStylesheets().add(MainWindow.class.getResource("login.css").toExternalForm());
         primaryStage.show();
@@ -101,6 +109,7 @@ public class MainWindow extends Application {
         gridGontentPanel = new GridPane();
         gridGontentPanel.setHgap(2);
         gridGontentPanel.setVgap(2);
+        gridGontentPanel.setPadding(new Insets(0, 5, 5, 5));
 
         //-------tool trip
         initUI_ToolTrip();
@@ -209,8 +218,9 @@ public class MainWindow extends Application {
         });
 
         VBox.setVgrow(listBox, Priority.ALWAYS);
-        vBoxListBox.getChildren().addAll(listBox);
 
+        vBoxListBox.getChildren().addAll(listBox);
+        vBoxListBox.setMinWidth(150);
         gridGontentPanel.add(vBoxListBox, 0, 2);
     }
 
@@ -222,6 +232,7 @@ public class MainWindow extends Application {
         textBoxName = new Text("Inbox");
 
         textBoxName.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));
+        textBoxName.setFill(Color.ORANGERED);
         listEmail = new ListView<>();
         itemsEmail = FXCollections.observableArrayList(
                 "Truong Quang Ngu", "Huynh Tu Thien", "Trieu Thi LyLy",
@@ -231,10 +242,89 @@ public class MainWindow extends Application {
 
         listEmail.setItems(itemsEmail);
 
+        //with CustomCell
+        //listEmail.setCellFactory(itemsEmail -> new CustomCell());
+        //old
+        listEmail.setCellFactory((ListView<String> l) -> new ListCell<String>() { //itemsEmail
+            @Override
+            public void updateItem(String name, boolean empty) {
+                super.updateItem(name, empty);
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setFont(new Font(17));
+                    //getChildren().addAll(new Button("xxx me!"));
+                    setText(name);
+                }
+            }
+        });
         vBoxListEmail.getChildren().addAll(textBoxName, listEmail);
         VBox.setVgrow(listEmail, Priority.ALWAYS);
+        vBoxListEmail.setMinWidth(250);
 
         gridGontentPanel.add(vBoxListEmail, 1, 2);
+    }
+
+    void initUI_BodyMail() {
+        VBox vBoxBodyEmail = new VBox();
+
+        tBoxSubject = new Text("Subject: ");
+        tBoxSubject.setFont(font20);
+        tBoxFrom = new Text("From: ");
+        tBoxFrom.setFont(font20);
+        tBoxDate = new Text("Date: ");
+        tBoxDate.setFont(font20);
+        taContent = new TextArea();
+        taContent.setPrefSize(1800, 900);
+        taContent.setWrapText(true);
+        taContent.setFont(font17);
+        vBoxBodyEmail.getChildren().addAll(tBoxSubject, tBoxFrom, tBoxDate, taContent);
+        VBox.setVgrow(taContent, Priority.ALWAYS);
+        gridGontentPanel.add(vBoxBodyEmail, 2, 2);
+    }
+
+    class CustomCell extends ListCell<String> {
+
+        private Button actionBtn;
+        private Label name;
+        private GridPane pane;
+
+        public CustomCell() {
+            super();
+
+            setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    //do something                  
+                }
+            });
+
+            actionBtn = new Button("my action");
+            actionBtn.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    System.out.println("Action: " + getItem());
+                }
+            });
+            name = new Label();
+            pane = new GridPane();
+            pane.add(name, 0, 0);
+            pane.add(actionBtn, 0, 1);
+            setText(null);
+        }
+
+        @Override
+        public void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            setEditable(false);
+            if (item != null) {
+                name.setText(item);
+                setGraphic(pane);
+            } else {
+                setGraphic(null);
+            }
+        }
     }
     //initialze UI : menubar
 
