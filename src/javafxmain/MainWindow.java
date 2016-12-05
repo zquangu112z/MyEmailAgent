@@ -47,7 +47,7 @@ import model.bo.CheckLoginBO;
 public class MainWindow extends Application {
 
     //declare comonents
-    GridPane gridLogin, gridQuickToolTrip, gridGontentPanel;//gridListBox,gridListEmail
+    GridPane gridLogin, gridGontentPanel;//gridListBox,gridListEmail,gridQuickToolTrip
     Text textLoginTitle, textActiontargetLogin;
     Text textBoxName;
     Label lbUserNameLogin, lbPasswordLogin;
@@ -101,41 +101,41 @@ public class MainWindow extends Application {
         gridGontentPanel = new GridPane();
         gridGontentPanel.setHgap(2);
         gridGontentPanel.setVgap(2);
+
         //-------tool trip
-        gridQuickToolTrip = new GridPane();
-        gridQuickToolTrip.setPadding(new Insets(5, 5, 5, 5));
-        gridQuickToolTrip.setAlignment(Pos.CENTER_LEFT);
-        gridQuickToolTrip.setHgap(10);
-        gridQuickToolTrip.setVgap(5);
-
-        btnCompose = new Button("New");
-        hbCompose = new HBox(10);
-        hbCompose.setAlignment(Pos.BOTTOM_CENTER);
-        hbCompose.getChildren().add(btnCompose);
-        gridQuickToolTrip.add(hbCompose, 0, 0, 2, 1);
-
-        btnReply = new Button("Reply");
-        hbReply = new HBox(10);
-        hbReply.setAlignment(Pos.BOTTOM_CENTER);
-        hbReply.getChildren().add(btnReply);
-        gridQuickToolTrip.add(hbReply, 2, 0, 2, 1);
-
-        btnForward = new Button("Forward");
-        hbForward = new HBox(10);
-        hbForward.setAlignment(Pos.BOTTOM_CENTER);
-        hbForward.getChildren().add(btnForward);
-        gridQuickToolTrip.add(hbForward, 4, 0, 2, 1);
-
-        gridGontentPanel.add(gridQuickToolTrip, 0, 0, 5, 1);
+        initUI_ToolTrip();
 
         //-------separate
         gridGontentPanel.add(new Separator(), 0, 1, 20, 1);
 
         //--------panel list box
         initUI_ListBox();
+
         //---------panel list email
         initUI_ListEmail();
         ((VBox) scene.getRoot()).getChildren().addAll(gridGontentPanel);
+    }
+
+    /**
+     * tool trip: new, reply,forward
+     */
+    void initUI_ToolTrip() {
+        HBox hBoxQuickToolTrip = new HBox(10);
+        hBoxQuickToolTrip.setPadding(new Insets(5, 5, 5, 5));
+        hBoxQuickToolTrip.setPrefWidth(70);
+
+        btnCompose = new Button("New");
+        btnCompose.setMinWidth(70);
+
+        btnReply = new Button("Reply");
+        btnReply.setMinWidth(70);
+
+        btnForward = new Button("Forward");
+        btnForward.setMinWidth(70);
+
+        hBoxQuickToolTrip.getChildren().addAll(btnCompose, btnReply, btnForward);
+
+        gridGontentPanel.add(hBoxQuickToolTrip, 0, 0, 5, 1);
     }
 
     /**
@@ -159,19 +159,50 @@ public class MainWindow extends Application {
                 }
         );
 
+        //6 images
+        int imgScaleListBox = 30;
+        Image image = new Image(this.getClass().getResource("imgInbox.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        Image image2 = new Image(this.getClass().getResource("imgDraft.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        Image image3 = new Image(this.getClass().getResource("imgImportant.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        Image image4 = new Image(this.getClass().getResource("imgSent.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        Image image5 = new Image(this.getClass().getResource("imgSpam.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        Image image6 = new Image(this.getClass().getResource("imgAll.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+
+        Image[] images = new Image[]{image, image2, image3, image4, image5, image6};
         listBox.setCellFactory(itemsBox -> new ListCell<String>() {
             private ImageView imageView = new ImageView();
 
             @Override
-            public void updateItem(String friend, boolean empty) {
-                super.updateItem(friend, empty);
+            public void updateItem(String name, boolean empty) {
+                super.updateItem(name, empty);
                 if (empty) {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    Image image = new Image(this.getClass().getResource("imgCompose.png").toString(), 20, 20, true, false);
-                    imageView.setImage(image);
-                    setText(friend);
+
+                    //Image image = new Image(this.getClass().getResource("imgCompose.png").toString(), 20, 20, true, false);
+                    switch (name) {
+                        case "Inbox":
+                            imageView.setImage(images[0]);
+                            break;
+                        case "Draft":
+                            imageView.setImage(images[1]);
+                            break;
+                        case "Important":
+                            imageView.setImage(images[2]);
+                            break;
+                        case "Sent":
+                            imageView.setImage(images[3]);
+                            break;
+                        case "Spam":
+                            imageView.setImage(images[4]);
+                            break;
+                        case "All":
+                            imageView.setImage(images[5]);
+                            break;
+                    }
+                    setFont(new Font(20));
+                    setText(name);
                     setGraphic(imageView);
                 }
             }
