@@ -17,22 +17,22 @@ import javax.mail.internet.MimeMultipart;
 public class SendEmail {
 
     //String to = "zquangu112z@gmail.com";//change accordingly  
-    Properties props;
+    Properties properties;
     
     public SendEmail() {
         //Get the session object  
-        props = new Properties();
-        props.put("mail.smtp.host", "smtp.gmail.com");
-        props.put("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.socketFactory.class",
+        properties = new Properties();
+        properties.put("mail.smtp.host", "smtp.gmail.com");
+        properties.put("mail.smtp.socketFactory.port", "465");
+        properties.put("mail.smtp.socketFactory.class",
                 "javax.net.ssl.SSLSocketFactory");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.port", "465");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.port", "465");
     }
     
     
     public void sendMail(String from, String pass, String to, String subject, String content) {
-        Session session = Session.getDefaultInstance(props,
+        Session session = Session.getDefaultInstance(properties,
                 new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
                         return new PasswordAuthentication(from, pass);//change accordingly  

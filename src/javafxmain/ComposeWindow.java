@@ -102,7 +102,7 @@ public class ComposeWindow extends Stage {
                 String content = taContent.getText();
 
                 if (subject.equals("") == false && to.equals("") == false && content.equals("") == false) {
-                    SendEmail gmailSend = new SendEmail();
+                    Gmail gmailSend = new Gmail();
                     gmailSend.sendMail("timexdanang@gmail.com", "quangu112", to, subject, content);//TODO: remove permanent from
                 } else {
                     notification.setText("Khong the gui email trong");
