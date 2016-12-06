@@ -17,7 +17,7 @@ public class CheckLoginBO {
    
 
     public boolean checkLoginGmail(String gmail, String password) {
-        return new Gmail().checkLoginGmail(gmail, password);
+        return new Gmail().connectGmail(gmail, password);
     }
 
 }

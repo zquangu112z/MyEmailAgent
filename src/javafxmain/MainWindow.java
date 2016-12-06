@@ -2,6 +2,8 @@ package javafxmain;
 
 import helper.Gmail;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -43,10 +45,8 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import javax.mail.Session;
 import model.bean.MailContent;
 import model.bo.CheckLoginBO;
-import model.bo.ParseMails;
 
 /**
  *
@@ -83,7 +83,7 @@ public class MainWindow extends Application {
     //TODO: xu li neu da o trang thai login roi thi phai connect lai store
     //Du lieu
     Gmail gmailHelper;
-    ArrayList<MailContent> mailContents = new ArrayList<>();
+    //ArrayList<MailContent> mailContents = new ArrayList<>();
     ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
 
     //Lay thong tin tu Preferences, neu ton tai thi hien thi
@@ -127,20 +127,25 @@ public class MainWindow extends Application {
         gridGontentPanel.setPadding(new Insets(0, 5, 5, 5));
 
         gmailHelper = new Gmail();
-        Thread getInbox = new Thread(new Runnable() {
 
+        itemsEmail = FXCollections.observableArrayList();//reset. if not: login session after a logout session will retain reloaded message
+        Thread getInbox = new Thread(new Runnable() {
             @Override
             public void run() {
-                for (MailContent mc : gmailHelper.getInboxMails()) {
-                    //itemsEmail.add(mc);
-                    //itemsEmail.notify();
-                    Platform.runLater(() ->  itemsEmail.add(mc));
+                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
+                for (MailContent mc : mailContents) {
+                    Platform.runLater(() -> itemsEmail.add(mc));
                 }
-
-                //listEmail.notify();
+                Platform.runLater(() -> {
+                    MailContent firstMail = mailContents.get(0);
+                    tBoxFrom.setText("From: " + firstMail.getFrom());
+                    tBoxSubject.setText("Subject: " + firstMail.getSubject());
+                    tBoxDate.setText("Date: " + firstMail.getTime());
+                    taContent.setText(firstMail.getBody());
+                });
             }
         });
-        
+
         getInbox.start();
 
         //-------tool trip
@@ -261,7 +266,6 @@ public class MainWindow extends Application {
      * panel list email
      */
     void initUI_ListEmail() {
-
         VBox vBoxListEmail = new VBox();
         textBoxName = new Text("Inbox");
 
@@ -269,17 +273,16 @@ public class MainWindow extends Application {
         textBoxName.setFill(Color.ORANGERED);
 
         //init arr list
-        mailContents.add(new MailContent("messageSubject", "messageFrom", "username", "now", "getTextFromMessage", 0));
-        mailContents.add(new MailContent("messageSubject2", "messageFrom2", "username2", "now2", "getTextFromMessage2", 0));
-        mailContents.add(new MailContent("messageSubject3", "messageFrom3", "username3", "now3", "getTextFromMessage3", 0));
+//        mailContents.add(new MailContent("messageSubject", "messageFrom", "username", "now", "getTextFromMessage", 0));
+//        mailContents.add(new MailContent("messageSubject2", "messageFrom2", "username2", "now2", "getTextFromMessage2", 0));
+//        mailContents.add(new MailContent("messageSubject3", "messageFrom3", "username3", "now3", "getTextFromMessage3", 0));
         //local 
         ListView<MailContent> listEmail = new ListView<MailContent>();
 
 //        ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
-        for (MailContent mc : mailContents) {
-            itemsEmail.add(mc);
-        }
-
+//        for (MailContent mc : mailContents) {
+//            itemsEmail.add(mc);
+//        }
         listEmail.setItems(itemsEmail);
 
         listEmail.getSelectionModel().selectedItemProperty().addListener(
@@ -342,7 +345,7 @@ public class MainWindow extends Application {
             super.updateItem(item, empty);
             setEditable(false);
             if (item != null) {
-                name.setText(item.getFrom());
+                name.setText(item.getFrom().split(" ")[0]);
                 subject.setText(item.getSubject());
                 setGraphic(vbox);
             } else {
@@ -560,5 +563,4 @@ public class MainWindow extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-
 }

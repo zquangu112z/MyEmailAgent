@@ -17,6 +17,10 @@ public class Gmail {
     String host = "pop.gmail.com";
     String username = "timexdanang@gmail.com";
 
+    static int start = 0;
+    static int end = 4;
+    static int jump = 5;
+
     public Gmail(String username) {
         //Get the session object  
         properties = new Properties();
@@ -45,7 +49,7 @@ public class Gmail {
      * @param password
      * @return
      */
-    public boolean checkLoginGmail(String gmail, String password) {
+    public boolean connectGmail(String gmail, String password) {
         try {
             session = Session.getDefaultInstance(properties,
                     new javax.mail.Authenticator() {
@@ -56,6 +60,10 @@ public class Gmail {
             store = session.getStore("pop3");
             store.connect("smtp.gmail.com", "timexdanang@gmail.com", "quangu112");
             System.out.println("asasdfasd");
+
+            //TODO reset count mail
+            start = 0;
+            end = 4;
             return true;
         } catch (Exception ex) {
             System.out.println("" + ex);
@@ -69,19 +77,21 @@ public class Gmail {
         try {
 
             try {
-                store.connect(host, "timexdanang@gmail.com", "quangu112");
+                connectGmail("timexdanang@gmail.com", "quangu112");
             } catch (Exception e) {
                 System.out.println("da ket noi: " + e);
             }
             //create the folder object and open it
             Folder emailFolder = store.getFolder("INBOX");
-            
-            
+
 //            emailFolder.open(Folder.READ_ONLY);
             emailFolder.open(Folder.HOLDS_MESSAGES);
 
             // retrieve the messages from the folder in an array and print it
             Message[] messages = emailFolder.getMessages();//Get all Message objects from this Folder.
+            start = end;
+            end += jump;
+
             System.out.println("messages.length---" + messages.length);
 
             //            for (int i = 0, n = messages.length; i < n; i++) {
@@ -140,8 +150,7 @@ public class Gmail {
                 break; // without break same text appears twice in my tests
             } else if (bodyPart.isMimeType("text/html")) {
                 System.out.println("TODO " + "xu li html");
-//            String html = (String) bodyPart.getContent();
-//            result = result + "\n" + org.jsoup.Jsoup.parse(html).text();
+                result = bodyPart.getContent().toString().replaceAll("(?s)<[^>]*>(\\s*<[^>]*>)*", " ");
             } else if (bodyPart.getContent() instanceof MimeMultipart) {
                 result = result + getTextFromMimeMultipart((MimeMultipart) bodyPart.getContent());
             }
@@ -151,7 +160,7 @@ public class Gmail {
 
     public static void main(String[] args) {
         Gmail gmail = new Gmail();
-        System.out.println("" + gmail.checkLoginGmail("sad", "asdf"));
+        System.out.println("" + gmail.connectGmail("sad", "asdf"));
         Gmail gmail2 = new Gmail();
         gmail2.getInboxMails();
     }
