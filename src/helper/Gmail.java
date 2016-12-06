@@ -67,14 +67,21 @@ public class Gmail {
         ArrayList<MailContent> mailContents = new ArrayList<>();
 
         try {
-            //store.connect(host, "timexdanang@gmail.com", "quangu112");
 
+            try {
+                store.connect(host, "timexdanang@gmail.com", "quangu112");
+            } catch (Exception e) {
+                System.out.println("da ket noi: " + e);
+            }
             //create the folder object and open it
             Folder emailFolder = store.getFolder("INBOX");
-            emailFolder.open(Folder.READ_ONLY);
+            
+            
+//            emailFolder.open(Folder.READ_ONLY);
+            emailFolder.open(Folder.HOLDS_MESSAGES);
 
             // retrieve the messages from the folder in an array and print it
-            Message[] messages = emailFolder.getMessages();
+            Message[] messages = emailFolder.getMessages();//Get all Message objects from this Folder.
             System.out.println("messages.length---" + messages.length);
 
             //            for (int i = 0, n = messages.length; i < n; i++) {

@@ -84,6 +84,7 @@ public class MainWindow extends Application {
     //Du lieu
     Gmail gmailHelper;
     ArrayList<MailContent> mailContents = new ArrayList<>();
+    ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
 
     //Lay thong tin tu Preferences, neu ton tai thi hien thi
     Preferences pref = Preferences.userRoot().node(this.getClass().getName());
@@ -130,16 +131,23 @@ public class MainWindow extends Application {
 
             @Override
             public void run() {
-                mailContents = gmailHelper.getInboxMails();
+                for (MailContent mc : gmailHelper.getInboxMails()) {
+                    //itemsEmail.add(mc);
+                    //itemsEmail.notify();
+                    Platform.runLater(() ->  itemsEmail.add(mc));
+                }
+
                 //listEmail.notify();
             }
         });
+        
+        getInbox.start();
 
         //-------tool trip
         initUI_ToolTrip();
 
         //-------separate
-        gridGontentPanel.add(new Separator(), 0, 1, 20, 1);
+        gridGontentPanel.add(new Separator(), 0, 1, 3, 1);
 
         //--------panel list box
         initUI_ListBox();
@@ -169,7 +177,7 @@ public class MainWindow extends Application {
 
         hBoxQuickToolTrip.getChildren().addAll(btnCompose, btnReply, btnForward);
 
-        gridGontentPanel.add(hBoxQuickToolTrip, 0, 0, 5, 1);
+        gridGontentPanel.add(hBoxQuickToolTrip, 0, 0, 3, 1);
     }
 
     /**
@@ -267,8 +275,7 @@ public class MainWindow extends Application {
         //local 
         ListView<MailContent> listEmail = new ListView<MailContent>();
 
-        ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
-
+//        ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
         for (MailContent mc : mailContents) {
             itemsEmail.add(mc);
         }
