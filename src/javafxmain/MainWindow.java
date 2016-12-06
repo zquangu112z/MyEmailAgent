@@ -2,8 +2,6 @@ package javafxmain;
 
 import helper.Gmail;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -173,12 +171,22 @@ public class MainWindow extends Application {
 
         btnCompose = new Button("New");
         btnCompose.setMinWidth(70);
+        btnCompose.setOnAction(new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+                ComposeWindow stage = new ComposeWindow();
+                stage.show();
+            }
+        });
 
         btnReply = new Button("Reply");
         btnReply.setMinWidth(70);
+        btnReply.setDisable(true);
 
         btnForward = new Button("Forward");
         btnForward.setMinWidth(70);
+        btnForward.setDisable(true);
 
         hBoxQuickToolTrip.getChildren().addAll(btnCompose, btnReply, btnForward);
 
@@ -272,17 +280,9 @@ public class MainWindow extends Application {
         textBoxName.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));
         textBoxName.setFill(Color.ORANGERED);
 
-        //init arr list
-//        mailContents.add(new MailContent("messageSubject", "messageFrom", "username", "now", "getTextFromMessage", 0));
-//        mailContents.add(new MailContent("messageSubject2", "messageFrom2", "username2", "now2", "getTextFromMessage2", 0));
-//        mailContents.add(new MailContent("messageSubject3", "messageFrom3", "username3", "now3", "getTextFromMessage3", 0));
-        //local 
+        //TODO remove local 
         ListView<MailContent> listEmail = new ListView<MailContent>();
 
-//        ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
-//        for (MailContent mc : mailContents) {
-//            itemsEmail.add(mc);
-//        }
         listEmail.setItems(itemsEmail);
 
         listEmail.getSelectionModel().selectedItemProperty().addListener(

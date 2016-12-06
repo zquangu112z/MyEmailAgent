@@ -164,4 +164,8 @@ public class Gmail {
         Gmail gmail2 = new Gmail();
         gmail2.getInboxMails();
     }
+
+    public void sendMail(String timexdananggmailcom, String to, String subject, String content) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
