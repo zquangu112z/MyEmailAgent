@@ -1,5 +1,7 @@
 package javafxmain;
 
+import helper.Gmail;
+import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -40,8 +42,11 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import javax.mail.Session;
+import model.bean.MailContent;
 import model.bo.CheckLoginBO;
+import model.bo.ParseMails;
 
 /**
  *
@@ -66,13 +71,19 @@ public class MainWindow extends Application {
     //font
     Font font20 = new Font(20);
     Font font17 = new Font(17);
+    Font font15 = new Font(15);
     String userName, passName;
 
     //logged in? if yes: switch to inbox interface
     boolean loggedIn;
 
-    ListView<String> listBox, listEmail;
-    ObservableList<String> itemsBox, itemsEmail;
+    ListView<String> listBox;
+    ObservableList<String> itemsBox;
+
+    //TODO: xu li neu da o trang thai login roi thi phai connect lai store
+    //Du lieu
+    Gmail gmailHelper;
+    ArrayList<MailContent> mailContents = new ArrayList<>();
 
     //Lay thong tin tu Preferences, neu ton tai thi hien thi
     Preferences pref = Preferences.userRoot().node(this.getClass().getName());
@@ -114,6 +125,16 @@ public class MainWindow extends Application {
         gridGontentPanel.setVgap(2);
         gridGontentPanel.setPadding(new Insets(0, 5, 5, 5));
 
+        gmailHelper = new Gmail();
+        Thread getInbox = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                mailContents = gmailHelper.getInboxMails();
+                //listEmail.notify();
+            }
+        });
+
         //-------tool trip
         initUI_ToolTrip();
 
@@ -125,6 +146,7 @@ public class MainWindow extends Application {
 
         //---------panel list email
         initUI_ListEmail();
+
         ((VBox) scene.getRoot()).getChildren().addAll(gridGontentPanel);
     }
 
@@ -231,42 +253,95 @@ public class MainWindow extends Application {
      * panel list email
      */
     void initUI_ListEmail() {
+
         VBox vBoxListEmail = new VBox();
         textBoxName = new Text("Inbox");
 
         textBoxName.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));
         textBoxName.setFill(Color.ORANGERED);
-        listEmail = new ListView<>();
-        itemsEmail = FXCollections.observableArrayList(
-                "Truong Quang Ngu", "Huynh Tu Thien", "Trieu Thi LyLy",
-                "Truong Quang Ngu", "Huynh Tu Thien", "Trieu Thi LyLy",
-                "Truong Quang Ngu", "Huynh Tu Thien", "Trieu Thi LyLy",
-                "Truong Quang Ngu", "Huynh Tu Thien", "Trieu Thi LyLy");
+
+        //init arr list
+        mailContents.add(new MailContent("messageSubject", "messageFrom", "username", "now", "getTextFromMessage", 0));
+        mailContents.add(new MailContent("messageSubject2", "messageFrom2", "username2", "now2", "getTextFromMessage2", 0));
+        mailContents.add(new MailContent("messageSubject3", "messageFrom3", "username3", "now3", "getTextFromMessage3", 0));
+        //local 
+        ListView<MailContent> listEmail = new ListView<MailContent>();
+
+        ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
+
+        for (MailContent mc : mailContents) {
+            itemsEmail.add(mc);
+        }
 
         listEmail.setItems(itemsEmail);
 
-        //with CustomCell
-        //listEmail.setCellFactory(itemsEmail -> new CustomCell());
-        //old
-        listEmail.setCellFactory((ListView<String> l) -> new ListCell<String>() { //itemsEmail
-            @Override
-            public void updateItem(String name, boolean empty) {
-                super.updateItem(name, empty);
-                if (empty) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    setFont(new Font(17));
-                    //getChildren().addAll(new Button("xxx me!"));
-                    setText(name);
+        listEmail.getSelectionModel().selectedItemProperty().addListener(
+                new ChangeListener<MailContent>() {
+                    @Override
+                    public void changed(ObservableValue<? extends MailContent> observable, MailContent oldValue, MailContent newValue) {
+                        tBoxFrom.setText("From: " + newValue.getFrom());
+                        tBoxSubject.setText("Subject: " + newValue.getSubject());
+                        tBoxDate.setText("Date: " + newValue.getTime());
+                        taContent.setText(newValue.getBody());
+                    }
                 }
+        );
+
+        //with CustomCell
+        listEmail.setCellFactory(new Callback<ListView<MailContent>, ListCell<MailContent>>() {
+            @Override
+            public ListCell<MailContent> call(ListView<MailContent> list) {
+                return new CustomCell();
             }
         });
+
         vBoxListEmail.getChildren().addAll(textBoxName, listEmail);
         VBox.setVgrow(listEmail, Priority.ALWAYS);
         vBoxListEmail.setMinWidth(250);
 
         gridGontentPanel.add(vBoxListEmail, 1, 2);
+    }
+
+    class CustomCell extends ListCell<MailContent> {
+
+        private Text name;
+        private Text subject;
+        private VBox vbox;
+
+        public CustomCell() {
+            super();
+
+            setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    //do something                  
+                }
+            });
+
+            name = new Text();
+            name.setFont(font20);
+
+            subject = new Text();
+            subject.setFont(font15);
+            subject.setFill(Color.DARKGRAY);
+            vbox = new VBox();
+            vbox.getChildren().addAll(name, subject);
+
+            setText(null);
+        }
+
+        @Override
+        public void updateItem(MailContent item, boolean empty) {
+            super.updateItem(item, empty);
+            setEditable(false);
+            if (item != null) {
+                name.setText(item.getFrom());
+                subject.setText(item.getSubject());
+                setGraphic(vbox);
+            } else {
+                setGraphic(null);
+            }
+        }
     }
 
     void initUI_BodyMail() {
@@ -287,50 +362,7 @@ public class MainWindow extends Application {
         gridGontentPanel.add(vBoxBodyEmail, 2, 2);
     }
 
-    class CustomCell extends ListCell<String> {
-
-        private Button actionBtn;
-        private Label name;
-        private GridPane pane;
-
-        public CustomCell() {
-            super();
-
-            setOnMouseClicked(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent event) {
-                    //do something                  
-                }
-            });
-
-            actionBtn = new Button("my action");
-            actionBtn.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    System.out.println("Action: " + getItem());
-                }
-            });
-            name = new Label();
-            pane = new GridPane();
-            pane.add(name, 0, 0);
-            pane.add(actionBtn, 0, 1);
-            setText(null);
-        }
-
-        @Override
-        public void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
-            setEditable(false);
-            if (item != null) {
-                name.setText(item);
-                setGraphic(pane);
-            } else {
-                setGraphic(null);
-            }
-        }
-    }
     //initialze UI : menubar
-
     /**
      * menu bar
      */
@@ -498,13 +530,11 @@ public class MainWindow extends Application {
 
                 boolean loginOK = new CheckLoginBO().checkLoginGmail(tfUsernameLogin.getText(), pfPasswordLogin.getText());
                 if (loginOK == false) {
-                    //TODO: sai mat khau, hien thi texttarget
                     System.out.println("ashdfashdkf_if");
                     textActiontargetLogin.setText("Khong the dang nhap!");
-                     btnLogin.setDisable(false);
+                    btnLogin.setDisable(false);
                 } else {
                     System.out.println("ashdfashdkf-else");
-                    //TODO: dung mat khau: chuyen man hinh, luu thong tin
                     //dua thong tin vao Preferences
                     if (cbRememberLogin.isSelected()) {
                         pref.put("user", tfUsernameLogin.getText());
