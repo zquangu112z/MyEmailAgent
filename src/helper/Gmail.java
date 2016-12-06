@@ -172,8 +172,8 @@ public class Gmail {
 //        Gmail gmail2 = new Gmail();
 //        gmail2.getInboxMails();
 
-        SendEmail se = new SendEmail();
-        se.sendMail("timexdanang@gmail.com", "quangu112", "zquangu112z@gmail.com", "hello", "hello");
+        //SendEmail se = new SendEmail();
+        //se.sendMail("timexdanang@gmail.com", "quangu112", "zquangu112z@gmail.com", "hello", "hello");
     }
 
     public void sendMail(String from, String pass, String to, String subject, String content) {

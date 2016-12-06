@@ -383,6 +383,15 @@ public class MainWindow extends Application {
         Menu mFile = new Menu("File");
         MenuItem miCompose = new MenuItem("New Email", new ImageView(new Image(this.getClass().getResource("imgCompose.png").toString(), 20, 20, true, false)));
         miCompose.setAccelerator(KeyCombination.keyCombination("Ctrl+N"));
+        miCompose.setOnAction(new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+                ComposeWindow stage = new ComposeWindow();
+                stage.show();
+            }
+        });
+
         MenuItem miLoggout = new MenuItem("Loggout");
         miLoggout.setOnAction(new EventHandler<ActionEvent>() {
 
