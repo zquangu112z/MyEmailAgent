@@ -59,8 +59,8 @@ public class Gmail {
             System.out.println("asasdfasd");
 
             return true;
-        } catch (Exception ex) {
-            System.out.println("" + ex);
+        } catch (Exception ex1) {
+            System.out.println("ex1" + ex1);
             return false;
         }
     }
@@ -74,13 +74,73 @@ public class Gmail {
                 });
     }
 
+    public ArrayList<MailContent> getInboxMails(String gmail, String pass) {
+        ArrayList<MailContent> mailContents = new ArrayList<>();
+
+        try {
+
+            System.setProperty("mail.mime.multipart.ignoreexistingboundaryparameter", "true");
+            try {
+                //System.out.println("this.username: " + this.username);
+                connectGmail(gmail, pass);//TODO remove
+
+            } catch (Exception e) {
+
+                System.out.println("da ket noi: " + e);
+            }
+            //create the folder object and open it
+            Folder emailFolder = store.getFolder("INBOX");
+
+//            emailFolder.open(Folder.READ_ONLY);
+            emailFolder.open(Folder.HOLDS_MESSAGES);
+
+            //Get all Message objects from this Folder.
+            Message[] messages = emailFolder.getMessages();
+
+            System.out.println("messages.length---" + messages.length);
+
+            for (int i = 0, n = 10; i < n; i++) {
+                try {
+                    Message message = messages[i];
+                    System.out.println("---------------------------------");
+                    System.out.println("Email Number " + (i + 1));
+                    System.out.println("Subject: " + message.getSubject());
+                    System.out.println("From: " + message.getFrom()[0]);
+                    System.out.println("Text: " + getTextFromMessage(message));
+                    mailContents.add(new MailContent(message.getSubject(), message.getFrom()[0] + "", username, "now", getTextFromMessage(message), 0));
+                } catch (ArrayIndexOutOfBoundsException aioobe) {
+                    break;
+                } catch (MessagingException e) {
+                    System.out.println("loi o day" + e);
+                }
+            }
+            //close the store and folder objects
+            emailFolder.close(false);
+            store.close();
+
+        } catch (NoSuchProviderException e) {
+            System.out.println("" + e);
+        } catch (Exception e) {
+            System.out.println("" + e);
+        }
+
+        return mailContents;
+    }
+
+    /**
+     * Default: user = "timexdanang@gmail.com", pass = "quangu112"
+     *
+     * @return
+     */
     public ArrayList<MailContent> getInboxMails() {
         ArrayList<MailContent> mailContents = new ArrayList<>();
 
         try {
 
             try {
-                connectGmail(this.username, this.password);//TODO remove
+                //System.out.println("this.username: " + this.username);
+                //connectGmail(this.username, this.password);//TODO remove
+                connectGmail("timexdanang@gmail.com", "quangu112");//TODO remove
             } catch (Exception e) {
                 System.out.println("da ket noi: " + e);
             }
@@ -115,7 +175,7 @@ public class Gmail {
         } catch (NoSuchProviderException e) {
             System.out.println("" + e);
         } catch (MessagingException e) {
-            System.out.println("" + e);
+            System.out.println("loi o day" + e);
         } catch (Exception e) {
             System.out.println("" + e);
         }
@@ -145,7 +205,7 @@ public class Gmail {
                 break; // without break same text appears twice in my tests
             } else if (bodyPart.isMimeType("text/html")) {
                 System.out.println("Xu li html");
-                result = bodyPart.getContent().toString().replaceAll("(?s)<[^>]*>(\\s*<[^>]*>)*", " ");
+                result = result +  bodyPart.getContent().toString().replaceAll("(?s)<[^>]*>(\\s*<[^>]*>)*", " ");
             } else if (bodyPart.getContent() instanceof MimeMultipart) {
                 result = result + getTextFromMimeMultipart((MimeMultipart) bodyPart.getContent());
             }
@@ -159,10 +219,10 @@ public class Gmail {
      * @param args
      */
     public static void main(String[] args) {
-//        Gmail gmail = new Gmail();
-//        System.out.println("" + gmail.connectGmail("timexdanang@gmail.com", "quangu112"));
-//        Gmail gmail2 = new Gmail();
-//        gmail2.getInboxMails();
+        Gmail gmail = new Gmail();
+        System.out.println("" + gmail.connectGmail("timexdanang@gmail.com", "quangu112"));
+        Gmail gmail2 = new Gmail();
+        gmail2.getInboxMails();
 
     }
 

@@ -130,7 +130,6 @@ public class MainWindow extends Application {
 //        scene.getStylesheets().add(MainWindow.class.getResource("login.css").toExternalForm());
 //        primaryStage.show();
 //    }
-
     void initUI_ContentPanel() {
         gridGontentPanel = new GridPane();
         gridGontentPanel.setHgap(2);
@@ -143,7 +142,8 @@ public class MainWindow extends Application {
         Thread getInbox = new Thread(new Runnable() {
             @Override
             public void run() {
-                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
+//                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
+                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""));
                 for (MailContent mc : mailContents) {
                     Platform.runLater(() -> itemsEmail.add(mc));
                 }
@@ -555,6 +555,10 @@ public class MainWindow extends Application {
                         pref.put("pass", pfPasswordLogin.getText());
                         pref.putBoolean("loggedIn", true);
                     }
+
+                    //user dang dang nhap
+                    pref.put("userLogged", tfUsernameLogin.getText());
+                    pref.put("passLogged", pfPasswordLogin.getText());
 
                     //switch window
                     Platform.runLater(() -> GUIInbox());
