@@ -6,7 +6,6 @@ import java.util.prefs.Preferences;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -78,7 +77,6 @@ public class MainWindow extends Application {
     ListView<String> listBox;
     ObservableList<String> itemsBox;
 
-    //TODO: xu li neu da o trang thai login roi thi phai connect lai store
     //Du lieu
     Gmail gmailHelper;
     //ArrayList<MailContent> mailContents = new ArrayList<>();
@@ -117,6 +115,21 @@ public class MainWindow extends Application {
         scene.getStylesheets().add(MainWindow.class.getResource("login.css").toExternalForm());
         primaryStage.show();
     }
+
+//    void GUIInbox(String username, String password) {
+//
+//        scene = new Scene(new VBox(), 1000, 700);
+//        primaryStage.setTitle("Inbox");
+//        Image imgIcon = new Image(this.getClass().getResource("imgIcon.png").toString(), 20, 20, true, false);
+//        primaryStage.getIcons().add(imgIcon);
+//
+//        initUI_Menubar();
+//        initUI_ContentPanel();
+//        initUI_BodyMail();
+//        primaryStage.setScene(scene);
+//        scene.getStylesheets().add(MainWindow.class.getResource("login.css").toExternalForm());
+//        primaryStage.show();
+//    }
 
     void initUI_ContentPanel() {
         gridGontentPanel = new GridPane();
@@ -272,7 +285,6 @@ public class MainWindow extends Application {
         textBoxName.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));
         textBoxName.setFill(Color.ORANGERED);
 
-        //TODO remove local 
         ListView<MailContent> listEmail = new ListView<MailContent>();
 
         listEmail.setItems(itemsEmail);
@@ -502,7 +514,6 @@ public class MainWindow extends Application {
         }
         passName = pref.get("pass", "");
         if (!passName.equals("")) {
-            //TODO: remove below line (seCurity)
             pfPasswordLogin.setText(passName);
         }
         return new String[]{userName, passName};

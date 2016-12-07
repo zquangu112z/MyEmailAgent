@@ -47,7 +47,6 @@ public class ChoosePictureAttachmentWindow {
 
     private String getPathFile(File file) {
         try {
-            //TODO open(file);
             picPath = file.getAbsolutePath();
         } catch (Exception ex) {
             //
