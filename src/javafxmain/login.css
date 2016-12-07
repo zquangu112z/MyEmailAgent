@@ -10,6 +10,10 @@ and open the template in the editor.
 
 .root{
     -fx-background-color: azure;
-    
+
+}
+#text-link{
+    -fx-underline: true;
+    -fx-fill: blue;
 }
 

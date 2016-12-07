@@ -171,13 +171,9 @@ public class MainWindow extends Application {
 
         btnCompose = new Button("New");
         btnCompose.setMinWidth(70);
-        btnCompose.setOnAction(new EventHandler<ActionEvent>() {
-
-            @Override
-            public void handle(ActionEvent event) {
-                ComposeWindow stage = new ComposeWindow();
-                stage.show();
-            }
+        btnCompose.setOnAction((ActionEvent event) -> {//su kien
+            ComposeWindow stage = new ComposeWindow();
+            stage.show();
         });
 
         btnReply = new Button("Reply");
@@ -206,13 +202,9 @@ public class MainWindow extends Application {
 
         listBox.setItems(itemsBox);
 
-        listBox.getSelectionModel().selectedItemProperty().addListener(
-                new ChangeListener<String>() {
-                    public void changed(ObservableValue<? extends String> ov, String old_val, String new_val) {
-                        textBoxName.setText(new_val);
-                    }
-                }
-        );
+        listBox.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends String> ov, String old_val, String new_val) -> {
+            textBoxName.setText(new_val);
+        });
 
         //6 images
         int imgScaleListBox = 30;
@@ -285,17 +277,12 @@ public class MainWindow extends Application {
 
         listEmail.setItems(itemsEmail);
 
-        listEmail.getSelectionModel().selectedItemProperty().addListener(
-                new ChangeListener<MailContent>() {
-                    @Override
-                    public void changed(ObservableValue<? extends MailContent> observable, MailContent oldValue, MailContent newValue) {
-                        tBoxFrom.setText("From: " + newValue.getFrom());
-                        tBoxSubject.setText("Subject: " + newValue.getSubject());
-                        tBoxDate.setText("Date: " + newValue.getTime());
-                        taContent.setText(newValue.getBody());
-                    }
-                }
-        );
+        listEmail.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends MailContent> observable, MailContent oldValue, MailContent newValue) -> {
+            tBoxFrom.setText("From: " + newValue.getFrom());
+            tBoxSubject.setText("Subject: " + newValue.getSubject());
+            tBoxDate.setText("Date: " + newValue.getTime());
+            taContent.setText(newValue.getBody());
+        });
 
         //with CustomCell
         listEmail.setCellFactory(new Callback<ListView<MailContent>, ListCell<MailContent>>() {
@@ -383,37 +370,40 @@ public class MainWindow extends Application {
         Menu mFile = new Menu("File");
         MenuItem miCompose = new MenuItem("New Email", new ImageView(new Image(this.getClass().getResource("imgCompose.png").toString(), 20, 20, true, false)));
         miCompose.setAccelerator(KeyCombination.keyCombination("Ctrl+N"));
-        miCompose.setOnAction(new EventHandler<ActionEvent>() {
-
-            @Override
-            public void handle(ActionEvent event) {
-                ComposeWindow stage = new ComposeWindow();
-                stage.show();
-            }
+        miCompose.setOnAction((ActionEvent event) -> {
+            ComposeWindow stage = new ComposeWindow();
+            stage.show();
         });
 
         MenuItem miLoggout = new MenuItem("Loggout");
-        miLoggout.setOnAction(new EventHandler<ActionEvent>() {
-
-            @Override
-            public void handle(ActionEvent t) {
-                doLoggout(t);
-            }
+        miLoggout.setOnAction((ActionEvent t) -> {
+            doLoggout(t);
         });
         MenuItem miExit = new MenuItem("Exit");
         miExit.setAccelerator(KeyCombination.keyCombination("Alt+F4"));
-        miExit.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                System.exit(0);
-            }
+        miExit.setOnAction((ActionEvent t) -> {
+            System.exit(0);
         });
         mFile.getItems().addAll(miCompose, miLoggout, new SeparatorMenuItem(), miExit);
         // --- Menu About
         Menu menuAbout = new Menu("About");
+
         MenuItem miSignature = new MenuItem("Signature");
+        miSignature.setAccelerator(KeyCombination.keyCombination("Ctrl+S"));
         MenuItem miAbout = new MenuItem("About");
+        miAbout.setAccelerator(KeyCombination.keyCombination("Ctrl+A"));
         menuAbout.getItems().addAll(miSignature, miAbout);
+
+        miAbout.setOnAction((ActionEvent event) -> {
+            AboutWindow stage = new AboutWindow();
+            stage.show();
+        });
+
+        miSignature.setOnAction((ActionEvent event) -> {
+            SignatureWindow stage = new SignatureWindow();
+            stage.show();
+        });
+
         menuBar.getMenus().addAll(mFile, menuAbout);
 
         ((VBox) scene.getRoot()).getChildren().addAll(menuBar);
@@ -458,29 +448,23 @@ public class MainWindow extends Application {
         cbRememberLogin.setSelected(true);
         gridLogin.add(cbRememberLogin, 0, 5, 2, 1);
 
-        cbRememberLogin.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                if (cbRememberLogin.isSelected()) {
-                    System.out.println("selected");
-                } else {
-                    System.out.println("unselected");
-                }
+        cbRememberLogin.setOnAction((ActionEvent t) -> {
+            if (cbRememberLogin.isSelected()) {
+                System.out.println("selected");
+            } else {
+                System.out.println("unselected");
             }
         });
 
         textActiontargetLogin = new Text();
         gridLogin.add(textActiontargetLogin, 1, 6);
 
-        btnLogin.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                textActiontargetLogin.setFill(Color.FIREBRICK);
-                textActiontargetLogin.setText("Checking...");
-                btnLogin.setDisable(true);
-                doLogin(e);
-                //dbtnLogin.setDisable(false);
-            }
+        btnLogin.setOnAction((ActionEvent e) -> {
+            textActiontargetLogin.setFill(Color.FIREBRICK);
+            textActiontargetLogin.setText("Checking...");
+            btnLogin.setDisable(true);
+            doLogin(e);
+            //dbtnLogin.setDisable(false);
         });
 
         //Lay thong tin tu Preferences, neu ton tai thi hien thi

@@ -6,6 +6,8 @@
 package javafxmain;
 
 import helper.Gmail;
+import java.util.ArrayList;
+import java.util.prefs.Preferences;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
@@ -25,6 +27,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javax.mail.MessagingException;
 
 /**
  *
@@ -36,7 +39,7 @@ public class ComposeWindow extends Stage {
     Label lbSubject, lbTo, lbContent;
     TextField tfSubject, tfTo;
     Text tNotification;
-    Button btnSend, btnCancel;
+    Button btnSend, btnExit, btnChooseFile;
     GridPane gridAction;
 
     //font
@@ -46,10 +49,17 @@ public class ComposeWindow extends Stage {
 
     Text tSubject, tTo;
     TextArea taContent;
+    private Label lbAttachment;
+    private Text t;
+    private Button btnRemoveAll;
 
+    Preferences prefSignature = Preferences.userRoot().node(MainWindow.class.getName());
+
+//    Stage stage = this;
     public ComposeWindow() {
-        //super();//TODO remove
-        sceneComposeWindow = new Scene(new VBox(), 1000, 700);
+        sceneComposeWindow = new Scene(new VBox(), 1000, 500);
+
+        sceneComposeWindow.getStylesheets().add(ComposeWindow.class.getResource("login.css").toExternalForm());
 
         setTitle("Compose");
         Image imgIcon = new Image(this.getClass().getResource("imgIcon.png").toString(), 20, 20, true, false);
@@ -85,13 +95,65 @@ public class ComposeWindow extends Stage {
         lbContent = new Label("Body: ");
         gridMailInfor.add(lbContent, 0, 2);
 
-        taContent = new TextArea("xin chao Quang Ngu 2016");
+        taContent = new TextArea("Xin chao Quang Ngu 2016: Nhiep anh gia dep trai nhat duyen hai mien Trung" + "\n" + prefSignature.get("signature", ""));
         taContent.setPrefSize(1800, 900);
         taContent.setWrapText(true);
         taContent.setFont(font17);
 
         tNotification = new Text("Press Send to delivery your email");
         tNotification.setFill(Color.DARKORANGE);
+
+        //attachment
+        GridPane gridMailAttach = new GridPane();
+        gridMailAttach.setAlignment(Pos.BASELINE_LEFT);
+        gridMailAttach.setHgap(10);
+        gridMailAttach.setVgap(10);
+        gridMailAttach.setPadding(new Insets(10, 10, 10, 10));
+
+        lbAttachment = new Label("Attachment: ");
+        lbAttachment.setMinWidth(100);
+        gridMailAttach.add(lbAttachment, 0, 0);
+
+        btnChooseFile = new Button("Choose File");
+        btnChooseFile.setMinWidth(70);
+        gridMailAttach.add(btnChooseFile, 2, 0);
+
+        t = new Text("");
+        t.setId("text-link");
+        gridMailAttach.add(t, 1, 0);
+
+        ArrayList<String> paths = new ArrayList<>();
+        btnChooseFile.setOnAction(new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+                ChoosePictureAttachmentWindow cpaw = new ChoosePictureAttachmentWindow(getStage());
+                String newPath = new String(cpaw.showDialog());
+
+                if (paths.contains(newPath)) {
+
+                } else {
+                    paths.add(newPath);
+                }
+
+                for (String path : paths) {
+                    if (t.getText().contains(path)) {
+                        continue;
+                    }
+                    t.setText(t.getText() + "\n" + path);
+
+                }
+            }
+        });
+
+        btnRemoveAll = new Button("Remove All");
+        btnRemoveAll.setMinWidth(70);
+        gridMailAttach.add(btnRemoveAll, 3, 0);
+
+        btnRemoveAll.setOnAction((ActionEvent event) -> {
+            paths.clear();
+            t.setText("");
+        });
 
         btnSend = new Button("Send");
         btnSend.setMinWidth(70);
@@ -109,7 +171,13 @@ public class ComposeWindow extends Stage {
                     Thread sendMailThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            gmailSend.sendMail("timexdanang@gmail.com", "quangu112", to, subject, content);//TODO: remove permanent from
+                            try {
+                                gmailSend.sendMail("timexdanang@gmail.com", "quangu112", to, subject, content, paths);//TODO: remove permanent from
+                            } catch (MessagingException me) {
+                                tNotification.setText("Send failed: MessagingException");
+                            } catch (Exception ex) {
+                                System.out.println("send failed" + ex);
+                            }
                             Platform.runLater(() -> {
                                 enableUI();
                                 tNotification.setText("Sent successful!");
@@ -125,10 +193,9 @@ public class ComposeWindow extends Stage {
             }
         });
 
-        btnCancel = new Button("Cancel");
-        btnCancel.setMinWidth(70);
-        btnCancel.setOnAction(new EventHandler() {
-
+        btnExit = new Button("Exit");
+        btnExit.setMinWidth(70);
+        btnExit.setOnAction(new EventHandler() {
             @Override
             public void handle(Event event) {
                 close();
@@ -140,10 +207,10 @@ public class ComposeWindow extends Stage {
         gridAction.setHgap(10);
         gridAction.setAlignment(Pos.CENTER);
         gridAction.add(btnSend, 0, 0);
-        gridAction.add(btnCancel, 1, 0);
+        gridAction.add(btnExit, 1, 0);
         gridAction.add(tNotification, 0, 1, 2, 1);
 
-        vBoxBodyEmail.getChildren().addAll(gridMailInfor, taContent, gridAction);
+        vBoxBodyEmail.getChildren().addAll(gridMailInfor, taContent, gridMailAttach, gridAction);
         VBox.setVgrow(taContent, Priority.ALWAYS);
 
         ((VBox) sceneComposeWindow.getRoot()).getChildren().addAll(vBoxBodyEmail);
@@ -151,11 +218,17 @@ public class ComposeWindow extends Stage {
         setScene(sceneComposeWindow);
     }
 
+    private ComposeWindow getStage() {
+        return this;
+    }
+
     void disableUI() {
         tfSubject.setDisable(true);
         tfTo.setDisable(true);
         taContent.setDisable(true);
-        btnCancel.setDisable(true);
+        btnExit.setDisable(true);
+        btnChooseFile.setDisable(true);
+        btnRemoveAll.setDisable(true);
         tNotification.setText("Sending...");
     }
 
@@ -163,7 +236,9 @@ public class ComposeWindow extends Stage {
         tfSubject.setDisable(false);
         tfTo.setDisable(false);
         taContent.setDisable(false);
-        btnCancel.setDisable(false);
+        btnExit.setDisable(false);
+        btnChooseFile.setDisable(false);
+        btnRemoveAll.setDisable(false);
     }
 
     public static void main(String[] args) {

@@ -23,10 +23,6 @@ public class Gmail {
     String host = "pop.gmail.com";
     String username = "timexdanang@gmail.com";
 
-    static int start = 0;
-    static int end = 4;
-    static int jump = 5;
-
     public Gmail() {
         //Get the session object  
         properties = new Properties();
@@ -45,7 +41,6 @@ public class Gmail {
 
     }
 
-    //TODO remove permanent parametter
     /**
      * Check login
      *
@@ -57,12 +52,9 @@ public class Gmail {
         try {
             initSession();
             store = session.getStore("pop3");
-            store.connect("smtp.gmail.com", "timexdanang@gmail.com", "quangu112");
+            store.connect("smtp.gmail.com", gmail, password);
             System.out.println("asasdfasd");
 
-            //TODO reset count mail
-            start = 0;
-            end = 4;
             return true;
         } catch (Exception ex) {
             System.out.println("" + ex);
@@ -95,14 +87,11 @@ public class Gmail {
 //            emailFolder.open(Folder.READ_ONLY);
             emailFolder.open(Folder.HOLDS_MESSAGES);
 
-            // retrieve the messages from the folder in an array and print it
-            Message[] messages = emailFolder.getMessages();//Get all Message objects from this Folder.
-            start = end;
-            end += jump;
+            //Get all Message objects from this Folder.
+            Message[] messages = emailFolder.getMessages();
 
             System.out.println("messages.length---" + messages.length);
 
-            //            for (int i = 0, n = messages.length; i < n; i++) {
             for (int i = 0, n = 10; i < n; i++) {
                 try {
                     Message message = messages[i];
@@ -111,8 +100,6 @@ public class Gmail {
                     System.out.println("Subject: " + message.getSubject());
                     System.out.println("From: " + message.getFrom()[0]);
                     System.out.println("Text: " + getTextFromMessage(message));
-                    //TODO change parametter: to
-                    //MailContent mailContent = new MailContent(message.getSubject(), message.getFrom()[0]+"", username, "now" , getTextFromMessage(message),0 );
                     mailContents.add(new MailContent(message.getSubject(), message.getFrom()[0] + "", username, "now", getTextFromMessage(message), 0));
                 } catch (ArrayIndexOutOfBoundsException aioobe) {
                     break;
@@ -123,13 +110,10 @@ public class Gmail {
             store.close();
 
         } catch (NoSuchProviderException e) {
-            e.printStackTrace();
             System.out.println("" + e);
         } catch (MessagingException e) {
-            e.printStackTrace();
             System.out.println("" + e);
         } catch (Exception e) {
-            e.printStackTrace();
             System.out.println("" + e);
         }
 
@@ -166,6 +150,11 @@ public class Gmail {
         return result;
     }
 
+    /**
+     * Testing
+     *
+     * @param args
+     */
     public static void main(String[] args) {
 //        Gmail gmail = new Gmail();
 //        System.out.println("" + gmail.connectGmail("sad", "asdf"));
@@ -176,7 +165,17 @@ public class Gmail {
         //se.sendMail("timexdanang@gmail.com", "quangu112", "zquangu112z@gmail.com", "hello", "hello");
     }
 
-    public void sendMail(String from, String pass, String to, String subject, String content) {
+    /**
+     * Send mail with NO attachments
+     *
+     * @param from
+     * @param pass
+     * @param to
+     * @param subject
+     * @param content
+     * @throws MessagingException
+     */
+    public void sendMail(String from, String pass, String to, String subject, String content) throws MessagingException {
 
         try {
             initSession();
@@ -184,37 +183,76 @@ public class Gmail {
             System.out.println("initSession lan 2" + e);
         }
         //composr email with attachment
-        try {
-            MimeMessage message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(from));//change accordingly  
-            message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-            message.setSubject("Quang Ngu De Thuong");
+        //try {
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(from));//change accordingly  
+        message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+        message.setSubject(subject);
 
-            Multipart multipart = new MimeMultipart();
-            // Create the message part 
-            BodyPart messagePart = new MimeBodyPart();
-            messagePart.setText("Nhiep anh gia dep trai nhat duyen hai mien Trung");
+        Multipart multipart = new MimeMultipart();
+        // Create the message part 
+        BodyPart messagePart = new MimeBodyPart();
+        messagePart.setText(content);
 
-            // Create the attachment part 
-            BodyPart attachmentPart = new MimeBodyPart();
-            String filename = "C:\\Users\\nguqt\\Desktop\\images.jpg";
-            DataSource source = new FileDataSource(filename);
-            attachmentPart.setDataHandler(new DataHandler(source));
-            attachmentPart.setFileName(filename);
+        multipart.addBodyPart(messagePart);
 
-            multipart.addBodyPart(attachmentPart);
-            multipart.addBodyPart(messagePart);
+        // Send the complete message parts
+        message.setContent(multipart);
+        //send message  
+        Transport.send(message);
 
-            // Send the complete message parts
-            message.setContent(multipart);
-            //send message  
-            Transport.send(message);
+        System.out.println("message sent successfully");
+    }
 
-            System.out.println("message sent successfully");
+    /**
+     * Send mail with attachments
+     *
+     * @param from
+     * @param pass
+     * @param to
+     * @param subject
+     * @param content
+     * @param attchmentsPath
+     * @throws MessagingException
+     */
+    public void sendMail(String from, String pass, String to, String subject, String content, ArrayList<String> attchmentsPath) throws MessagingException {
 
-        } catch (Exception e) {
-            System.out.println("" + e);
+        if (attchmentsPath.isEmpty()) {
+            this.sendMail(from, pass, to, subject, content);
+            return;
         }
+        try {
+            initSession();
+        } catch (Exception e) {
+            System.out.println("initSession lan 2" + e);
+        }
+        //composr email with attachment
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(from));//change accordingly  
+        message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+        message.setSubject(subject);
+
+        Multipart multipart = new MimeMultipart();
+        // Create the message part 
+        BodyPart messagePart = new MimeBodyPart();
+        messagePart.setText(content);
+
+        multipart.addBodyPart(messagePart);
+        // Create the attachment part 
+        for (String path : attchmentsPath) {
+            BodyPart attachmentPart = new MimeBodyPart();
+            DataSource source = new FileDataSource(path);
+            attachmentPart.setDataHandler(new DataHandler(source));
+            attachmentPart.setFileName(path);
+            multipart.addBodyPart(attachmentPart);
+        }
+
+        // Send the complete message parts
+        message.setContent(multipart);
+        //send message  
+        Transport.send(message);
+
+        System.out.println("message sent successfully");
     }
 
 }
@@ -263,7 +301,6 @@ public class Gmail {
 //        properties.put("mail.pop3.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 //    }
 //
-//    //TODO remove permanent parametter
 //    /**
 //     * Check login
 //     *
@@ -283,7 +320,6 @@ public class Gmail {
 //            store.connect("smtp.gmail.com", "timexdanang@gmail.com", "quangu112");
 //            System.out.println("asasdfasd");
 //
-//            //TODO reset count mail
 //            start = 0;
 //            end = 4;
 //            return true;
@@ -371,7 +407,7 @@ public class Gmail {
 //                result = result + "\n" + bodyPart.getContent();
 //                break; // without break same text appears twice in my tests
 //            } else if (bodyPart.isMimeType("text/html")) {
-//                System.out.println("TODO " + "xu li html");
+//                System.out.println( "xu li html");
 //                result = bodyPart.getContent().toString().replaceAll("(?s)<[^>]*>(\\s*<[^>]*>)*", " ");
 //            } else if (bodyPart.getContent() instanceof MimeMultipart) {
 //                result = result + getTextFromMimeMultipart((MimeMultipart) bodyPart.getContent());
