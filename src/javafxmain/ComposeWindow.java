@@ -158,21 +158,23 @@ public class ComposeWindow extends Stage {
         btnSend = new Button("Send");
         btnSend.setMinWidth(70);
         btnSend.setOnAction(new EventHandler<ActionEvent>() {
-
             @Override
             public void handle(ActionEvent event) {
                 String subject = tfSubject.getText();
-                String to = tfTo.getText();
+
+                //xu li multi address: đầu vào phải là String []
+                String[] addrs = excuteStringAddress(tfTo.getText());
+
                 String content = taContent.getText();
 
-                if (subject.equals("") == false && to.equals("") == false && content.equals("") == false) {
+                if (subject.equals("") == false && (addrs.length > 0) && content.equals("") == false) {
                     Gmail gmailSend = new Gmail();
                     disableUI();
                     Thread sendMailThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                gmailSend.sendMail("timexdanang@gmail.com", "quangu112", to, subject, content, paths);//TODO: remove permanent from
+                                gmailSend.sendMail("timexdanang@gmail.com", "quangu112", addrs, subject, content, paths);//TODO: remove permanent from
                             } catch (MessagingException me) {
                                 tNotification.setText("Send failed: MessagingException");
                             } catch (Exception ex) {
@@ -216,6 +218,14 @@ public class ComposeWindow extends Stage {
         ((VBox) sceneComposeWindow.getRoot()).getChildren().addAll(vBoxBodyEmail);
         ((VBox) sceneComposeWindow.getRoot()).setPadding(new Insets(5, 5, 5, 5));
         setScene(sceneComposeWindow);
+    }
+
+    String[] excuteStringAddress(String text) {
+        String[] addrs = text.split(",");
+        for (int i = 0; i < addrs.length; i++) {
+            addrs[i] = addrs[i].trim();
+        }
+        return addrs;
     }
 
     private ComposeWindow getStage() {

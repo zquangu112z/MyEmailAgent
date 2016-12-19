@@ -5,11 +5,13 @@
  */
 package model.bean;
 
+import java.io.Serializable;
+
 /**
  *
  * @author nguqt
  */
-public class MailContent {
+public class MailContent{
 
     String subject, from, to, time, body;
     int type;//0: inbox 1: draft...

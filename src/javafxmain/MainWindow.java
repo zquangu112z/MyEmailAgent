@@ -44,6 +44,8 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import model.bean.MailContent;
 import model.bo.CheckLoginBO;
+import org.cacheonix.Cacheonix;
+import org.cacheonix.cache.Cache;
 
 /**
  *
@@ -116,20 +118,10 @@ public class MainWindow extends Application {
         primaryStage.show();
     }
 
-//    void GUIInbox(String username, String password) {
-//
-//        scene = new Scene(new VBox(), 1000, 700);
-//        primaryStage.setTitle("Inbox");
-//        Image imgIcon = new Image(this.getClass().getResource("imgIcon.png").toString(), 20, 20, true, false);
-//        primaryStage.getIcons().add(imgIcon);
-//
-//        initUI_Menubar();
-//        initUI_ContentPanel();
-//        initUI_BodyMail();
-//        primaryStage.setScene(scene);
-//        scene.getStylesheets().add(MainWindow.class.getResource("login.css").toExternalForm());
-//        primaryStage.show();
-//    }
+    Cacheonix cacheManager;
+    String keyCache = "listmail";
+    Cache<String, ArrayList<MailContent>> cache;
+
     void initUI_ContentPanel() {
         gridGontentPanel = new GridPane();
         gridGontentPanel.setHgap(2);
@@ -139,25 +131,21 @@ public class MainWindow extends Application {
         gmailHelper = new Gmail();
 
         itemsEmail = FXCollections.observableArrayList();//reset. if not: login session after a logout session will retain reloaded message
-        Thread getInbox = new Thread(new Runnable() {
-            @Override
-            public void run() {
-//                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
-                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""));
-                for (MailContent mc : mailContents) {
-                    Platform.runLater(() -> itemsEmail.add(mc));
-                }
-                Platform.runLater(() -> {
-                    MailContent firstMail = mailContents.get(0);
-                    tBoxFrom.setText("From: " + firstMail.getFrom());
-                    tBoxSubject.setText("Subject: " + firstMail.getSubject());
-                    tBoxDate.setText("Date: " + firstMail.getTime());
-                    taContent.setText(firstMail.getBody());
-                });
-            }
-        });
 
-        getInbox.start();
+        //----------cache
+//        cacheManager = Cacheonix.getInstance();
+//        cache = cacheManager.getCache("invoce.cache");
+//
+//        // Put object to the cache
+//        try {
+//            ArrayList<MailContent> arr = cache.get(keyCache);
+//            for (MailContent mc : arr) {
+//                    itemsEmail.add(mc);
+//                }
+//        } catch (Exception e) {
+//            System.out.println("Looi cache" + e);
+//        }
+//        //----------cache
 
         //-------tool trip
         initUI_ToolTrip();
@@ -170,8 +158,39 @@ public class MainWindow extends Application {
 
         //---------panel list email
         initUI_ListEmail();
+        getInboxMails();
 
+//        getInbox.start();
         ((VBox) scene.getRoot()).getChildren().addAll(gridGontentPanel);
+    }
+
+    void getInboxMails() {
+        Thread getInbox = new Thread(new Runnable() {
+            @Override
+            public void run() {
+//                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
+                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""));
+
+                //cache
+                //cache.put(keyCache, mailContents);
+                //cache
+                
+                
+                for (MailContent mc : mailContents) {
+                    itemsEmail.add(mc);
+//                    Platform.runLater(() -> itemsEmail.add(mc));
+                }
+                Platform.runLater(() -> {
+                    MailContent firstMail = mailContents.get(0);
+                    tBoxFrom.setText("From: " + firstMail.getFrom());
+                    tBoxSubject.setText("Subject: " + firstMail.getSubject());
+                    tBoxDate.setText("Date: " + firstMail.getTime());
+                    taContent.setText(firstMail.getBody());
+                });
+            }
+        });
+
+        getInbox.start();
     }
 
     /**
