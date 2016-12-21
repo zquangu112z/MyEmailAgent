@@ -1,6 +1,7 @@
 package javafxmain;
 
 import helper.Gmail;
+import helper.StoreLocal;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
@@ -10,7 +11,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -30,7 +30,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -44,8 +43,6 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import model.bean.MailContent;
 import model.bo.CheckLoginBO;
-import org.cacheonix.Cacheonix;
-import org.cacheonix.cache.Cache;
 
 /**
  *
@@ -53,8 +50,8 @@ import org.cacheonix.cache.Cache;
  */
 public class MainWindow extends Application {
 
-    //declare comonents
-    GridPane gridLogin, gridGontentPanel;//gridListBox,gridListEmail,gridQuickToolTrip
+    //declare components
+    GridPane gridLogin, gridGontentPanel;
     Text textLoginTitle, textActiontargetLogin, tBoxSubject, tBoxFrom, tBoxDate;
     Text textBoxName;
     Label lbUserNameLogin, lbPasswordLogin;
@@ -78,6 +75,7 @@ public class MainWindow extends Application {
 
     ListView<String> listBox;
     ObservableList<String> itemsBox;
+    ListView<MailContent> listEmail;
 
     //Du lieu
     Gmail gmailHelper;
@@ -86,6 +84,10 @@ public class MainWindow extends Application {
 
     //Lay thong tin tu Preferences, neu ton tai thi hien thi
     Preferences pref = Preferences.userRoot().node(this.getClass().getName());
+
+    //Mail offline
+    StoreLocal storeMail = new StoreLocal();
+    ArrayList<MailContent> locallyMailContents;
 
     @Override
     public void start(Stage primaryStage) {
@@ -110,17 +112,28 @@ public class MainWindow extends Application {
         Image imgIcon = new Image(this.getClass().getResource("imgIcon.png").toString(), 20, 20, true, false);
         primaryStage.getIcons().add(imgIcon);
 
+//        try {
+//            long startTime = System.nanoTime();
+//            for (int i = 0; i < 100; i++) {
+//                //pref.get("ádfasdf", "ngudeotrai");
+//                System.out.println(""+pref.get("ádfasdf", "ngudeotraideotraideotraideotraideotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotrai"));
+//            }
+//            long endTime = System.nanoTime();
+//            System.out.println("thoi gian: " + (endTime - startTime));
+//        } catch (Exception e) {
+//            System.out.println("loi pref");
+//        }
         initUI_Menubar();
+
         initUI_ContentPanel();
+
         initUI_BodyMail();
+        
+        
         primaryStage.setScene(scene);
         scene.getStylesheets().add(MainWindow.class.getResource("login.css").toExternalForm());
         primaryStage.show();
     }
-
-    Cacheonix cacheManager;
-    String keyCache = "listmail";
-    Cache<String, ArrayList<MailContent>> cache;
 
     void initUI_ContentPanel() {
         gridGontentPanel = new GridPane();
@@ -130,22 +143,13 @@ public class MainWindow extends Application {
 
         gmailHelper = new Gmail();
 
-        itemsEmail = FXCollections.observableArrayList();//reset. if not: login session after a logout session will retain reloaded message
-
-        //----------cache
-//        cacheManager = Cacheonix.getInstance();
-//        cache = cacheManager.getCache("invoce.cache");
-//
-//        // Put object to the cache
-//        try {
-//            ArrayList<MailContent> arr = cache.get(keyCache);
-//            for (MailContent mc : arr) {
-//                    itemsEmail.add(mc);
-//                }
-//        } catch (Exception e) {
-//            System.out.println("Looi cache" + e);
-//        }
-//        //----------cache
+        //storeMail.restoreMailsFromPref(pref, userName); get mail locally
+        //load mail locally
+        locallyMailContents = storeMail.restoreMailsFromPref(pref, userName);//from the lastest session
+        itemsEmail = FXCollections.observableArrayList(locallyMailContents);
+        
+        //old
+        //itemsEmail = FXCollections.observableArrayList();//reset. if not: login session after a logout session will retain reloaded message
 
         //-------tool trip
         initUI_ToolTrip();
@@ -170,22 +174,41 @@ public class MainWindow extends Application {
             public void run() {
 //                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
                 ArrayList<MailContent> mailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""));
-
                 //cache
                 //cache.put(keyCache, mailContents);
                 //cache
-                
-                
-                for (MailContent mc : mailContents) {
-                    itemsEmail.add(mc);
-//                    Platform.runLater(() -> itemsEmail.add(mc));
-                }
+
+                //parse ArrayList -> ObservableList
+                //new    
+//                itemsEmail.clear();
+//                itemsEmail.addAll(mailContents);
+                //itemsEmail = FXCollections.observableArrayList(mailContents);
+                //listEmail.setItems(itemsEmail);//refresh 
+                //itemsEmail.notifyAll();
+                //old
+//                for (MailContent mc : mailContents) {
+//                    itemsEmail.add(mc);
+////                    Platform.runLater(() -> itemsEmail.add(mc));
+//                }
                 Platform.runLater(() -> {
-                    MailContent firstMail = mailContents.get(0);
-                    tBoxFrom.setText("From: " + firstMail.getFrom());
-                    tBoxSubject.setText("Subject: " + firstMail.getSubject());
-                    tBoxDate.setText("Date: " + firstMail.getTime());
-                    taContent.setText(firstMail.getBody());
+                    try {
+                        //cap nhat list mail
+                        itemsEmail.clear();
+                        itemsEmail.addAll(mailContents);
+
+                       
+                        MailContent firstMail = mailContents.get(0);
+                        tBoxFrom.setText("From: " + firstMail.getFrom());
+                        tBoxSubject.setText("Subject: " + firstMail.getSubject());
+                        tBoxDate.setText("Date: " + firstMail.getTime());
+                        taContent.setText(firstMail.getBody());
+
+                        //luu mail localy
+                        storeMail.storeMailsToPref(mailContents, pref, userName);
+
+                    } catch (Exception e) {
+                        System.out.println("Loi set noi dung mail sau khi get mail from server" + e);
+                    }
                 });
             }
         });
@@ -304,7 +327,7 @@ public class MainWindow extends Application {
         textBoxName.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));
         textBoxName.setFill(Color.ORANGERED);
 
-        ListView<MailContent> listEmail = new ListView<MailContent>();
+        listEmail = new ListView<MailContent>();
 
         listEmail.setItems(itemsEmail);
 
@@ -319,7 +342,7 @@ public class MainWindow extends Application {
         listEmail.setCellFactory(new Callback<ListView<MailContent>, ListCell<MailContent>>() {
             @Override
             public ListCell<MailContent> call(ListView<MailContent> list) {
-                return new CustomCell();
+                return new CustomCellListMail();
             }
         });
 
@@ -328,48 +351,6 @@ public class MainWindow extends Application {
         vBoxListEmail.setMinWidth(250);
 
         gridGontentPanel.add(vBoxListEmail, 1, 2);
-    }
-
-    class CustomCell extends ListCell<MailContent> {
-
-        private Text name;
-        private Text subject;
-        private VBox vbox;
-
-        public CustomCell() {
-            super();
-
-            setOnMouseClicked(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent event) {
-                    //do something                  
-                }
-            });
-
-            name = new Text();
-            name.setFont(font20);
-
-            subject = new Text();
-            subject.setFont(font15);
-            subject.setFill(Color.DARKGRAY);
-            vbox = new VBox();
-            vbox.getChildren().addAll(name, subject);
-
-            setText(null);
-        }
-
-        @Override
-        public void updateItem(MailContent item, boolean empty) {
-            super.updateItem(item, empty);
-            setEditable(false);
-            if (item != null) {
-                name.setText(item.getFrom().split(" ")[0]);
-                subject.setText(item.getSubject());
-                setGraphic(vbox);
-            } else {
-                setGraphic(null);
-            }
-        }
     }
 
     void initUI_BodyMail() {
@@ -388,6 +369,13 @@ public class MainWindow extends Application {
         vBoxBodyEmail.getChildren().addAll(tBoxSubject, tBoxFrom, tBoxDate, taContent);
         VBox.setVgrow(taContent, Priority.ALWAYS);
         gridGontentPanel.add(vBoxBodyEmail, 2, 2);
+        
+        //init first mail
+        MailContent firstMail = locallyMailContents.get(0);
+        tBoxFrom.setText("From: " + firstMail.getFrom());
+        tBoxSubject.setText("Subject: " + firstMail.getSubject());
+        tBoxDate.setText("Date: " + firstMail.getTime());
+        taContent.setText(firstMail.getBody());
     }
 
     //initialze UI : menubar

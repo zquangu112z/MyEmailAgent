@@ -100,14 +100,14 @@ public class Gmail {
             Message[] messages = emailFolder.getMessages();
 
             System.out.println("messages.length---" + messages.length);
-
+            Message message;
             for (int i = 0, n = 10; i < n; i++) {
                 try {
-                    Message message = messages[i];
-                    System.out.println("---------------------------------");
-                    System.out.println("Email Number " + (i + 1));
-                    System.out.println("Subject: " + message.getSubject());
-                    System.out.println("From: " + message.getFrom()[0]);
+                    message = messages[i];
+//                    System.out.println("---------------------------------");
+//                    System.out.println("Email Number " + (i + 1));
+//                    System.out.println("Subject: " + message.getSubject());
+//                    System.out.println("From: " + message.getFrom()[0]);
 //                    System.out.println("Text: " + getTextFromMessage(message));
                     mailContents.add(new MailContent(message.getSubject(), message.getFrom()[0] + "", username, "now", getTextFromMessage(message), 0));
                 } catch (ArrayIndexOutOfBoundsException aioobe) {
@@ -187,32 +187,38 @@ public class Gmail {
         return mailContents;
     }
 
-    private static String getTextFromMessage(Message message) throws Exception {
-        String result = "";
+    String result = "";
+    MimeMultipart mimeMultipart;
+
+    private String getTextFromMessage(Message message) throws Exception {
+        result = "";
         if (message.isMimeType("text/plain")) {
             result = message.getContent().toString();
         } else if (message.isMimeType("multipart/*")) {
-            MimeMultipart mimeMultipart = (MimeMultipart) message.getContent();
+            mimeMultipart = (MimeMultipart) message.getContent();
             result = getTextFromMimeMultipart(mimeMultipart);
         }
         return result;
     }
 
-    private static String getTextFromMimeMultipart(
+    BodyPart bodyPart;
+
+    private String getTextFromMimeMultipart(
             MimeMultipart mimeMultipart) throws Exception {
-        String result = "";
+        result = "";
         int count = mimeMultipart.getCount();
         for (int i = 0; i < count; i++) {
-            BodyPart bodyPart = mimeMultipart.getBodyPart(i);
+            bodyPart = mimeMultipart.getBodyPart(i);
             if (bodyPart.isMimeType("text/plain")) {
                 result = result + "\n" + bodyPart.getContent();
                 break; // without break same text appears twice in my tests
             } else if (bodyPart.isMimeType("text/html")) {
                 System.out.println("Xu li html");
                 result = result + bodyPart.getContent().toString().replaceAll("(?s)<[^>]*>(\\s*<[^>]*>)*", " ");
-            } else if (bodyPart.getContent() instanceof MimeMultipart) {
-                result = result + getTextFromMimeMultipart((MimeMultipart) bodyPart.getContent());
             }
+//            else if (bodyPart.getContent() instanceof MimeMultipart) {
+            //result = result + getTextFromMimeMultipart((MimeMultipart) bodyPart.getContent());
+//            }
         }
         return result;
     }
@@ -229,15 +235,15 @@ public class Gmail {
         //dang dang nhap
         System.out.println("" + gmail.connectGmail("timexdanang@gmail.com", "quangu112"));
         Gmail gmail2 = new Gmail();
-        try {
-            String [] tos = new String[]{"zquangu112z@gmail.comdf", "nguqtruong@gmail.com"};
-            gmail2.sendMail("timexdanang@gmail.com", "quangu112", tos, "asjdfhasd", "jahsdflaksd", null);
-        } catch (Exception me) {
-            
-            System.out.println("Gui mail bi loi" + me);
-            System.out.println("Chua dang nhap (connect email");
-        }
-        //gmail2.getInboxMails("timexdanang@gmail.com", "quangu112");
+//        try {
+//            String [] tos = new String[]{"zquangu112z@gmail.comdf", "nguqtruong@gmail.com"};
+//            gmail2.sendMail("timexdanang@gmail.com", "quangu112", tos, "asjdfhasd", "jahsdflaksd", null);
+//        } catch (Exception me) {
+//            
+//            System.out.println("Gui mail bi loi" + me);
+//            System.out.println("Chua dang nhap (connect email");
+//        }
+        gmail2.getInboxMails("timexdanang@gmail.com", "quangu112");
 
     }
 
@@ -253,33 +259,33 @@ public class Gmail {
      */
     public void sendMail(String from, String pass, String to, String subject, String content) throws MessagingException {
 
-     try {
-     initSession();
-     } catch (Exception e) {
-     System.out.println("initSession lan 2" + e);
-     }
-     //composr email with attachment
-     //try {
-     MimeMessage message = new MimeMessage(session);
-     message.setFrom(new InternetAddress(from));//change accordingly  
-     message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-     message.setSubject(subject);
+        try {
+            initSession();
+        } catch (Exception e) {
+            System.out.println("initSession lan 2" + e);
+        }
+        //composr email with attachment
+        //try {
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(from));//change accordingly  
+        message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+        message.setSubject(subject);
 
-     Multipart multipart = new MimeMultipart();
-     // Create the message part 
-     BodyPart messagePart = new MimeBodyPart();
-     messagePart.setText(content);
+        Multipart multipart = new MimeMultipart();
+        // Create the message part 
+        BodyPart messagePart = new MimeBodyPart();
+        messagePart.setText(content);
 
-     multipart.addBodyPart(messagePart);
+        multipart.addBodyPart(messagePart);
 
-     // Send the complete message parts
-     message.setContent(multipart);
-     //send message  
-     Transport.send(message);
+        // Send the complete message parts
+        message.setContent(multipart);
+        //send message  
+        Transport.send(message);
 
-     System.out.println("message sent successfully");
-     }
-     
+        System.out.println("message sent successfully");
+    }
+
     /**
      * Send mail with attachments
      *
@@ -338,13 +344,14 @@ public class Gmail {
 
     /**
      * Send mail with attachments & multi address
+     *
      * @param from
      * @param pass
      * @param to
      * @param subject
      * @param content
      * @param attchmentsPath
-     * @throws MessagingException 
+     * @throws MessagingException
      */
     public void sendMail(String from, String pass, String[] to, String subject, String content, ArrayList<String> attchmentsPath) throws MessagingException {
 
