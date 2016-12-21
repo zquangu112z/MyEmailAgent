@@ -14,17 +14,17 @@ import model.bean.MailContent;
  */
 public class StoreLocal {
 
-    public boolean storeMailsToPref(ArrayList<MailContent> mailContents, Preferences pref, String username) {
+    public boolean storeMailsToPref(ArrayList<MailContent> mailContents, int type, Preferences pref, String username) {
         try {
             MailContent mc;
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 5; i++) {
                 mc = mailContents.get(i);
-                pref.put(username + "subject" + i, mc.getSubject());
-                pref.put(username + "from" + i, mc.getFrom());
-                pref.put(username + "to" + i, mc.getTo());
-                pref.put(username + "time" + i, mc.getTime());
-                pref.put(username + "body" + i, mc.getBody());
-                pref.put(username + "type" + i, mc.getType() + "");
+                pref.put(username + type + "subject" + i, mc.getSubject());
+                pref.put(username + type + "from" + i, mc.getFrom());
+                pref.put(username + type + "to" + i, mc.getTo());
+                pref.put(username + type + "time" + i, mc.getTime());
+                pref.put(username + type + "body" + i, mc.getBody());
+                pref.put(username + type + "type" + i, mc.getType() + "");
             }
         } catch (ArrayIndexOutOfBoundsException aioobe) {//phong truong hop list mail < 10 
             System.out.println("Loi luu mail to preference" + aioobe);
@@ -36,17 +36,17 @@ public class StoreLocal {
         return true;
     }
 
-    public ArrayList<MailContent> restoreMailsFromPref(Preferences pref, String username) {
+    public ArrayList<MailContent> restoreMailsFromPref(int type, Preferences pref, String username) {
         ArrayList<MailContent> mailContents = new ArrayList<>();
         MailContent mc;
         try {
             for (int i = 0; i < 5; i++) {
-                mc = new MailContent(pref.get(username + "subject" + i, "loading..."),
-                        pref.get(username + "from" + i, "loading..."),
-                        pref.get(username + "to" + i, "loading..."),
-                        pref.get(username + "time" + i, "loading..."),
-                        pref.get(username + "body" + i, "loading..."),
-                        Integer.parseInt(pref.get(username + "type" + i, "1")));
+                mc = new MailContent(pref.get(username + type + "subject" + i, "loading..."),
+                        pref.get(username + type + "from" + i, "loading..."),
+                        pref.get(username + type + "to" + i, "loading..."),
+                        pref.get(username + type + "time" + i, "loading..."),
+                        pref.get(username + type + "body" + i, "loading..."),
+                        Integer.parseInt(pref.get(username + type + "type" + i, "1")));
                 mailContents.add(mc);
             }
         } catch (ArrayIndexOutOfBoundsException aioobe) {//phong truong hop list mail < 10 
@@ -66,10 +66,10 @@ public class StoreLocal {
         } catch (BackingStoreException ex) {
             Logger.getLogger(StoreLocal.class.getName()).log(Level.SEVERE, null, ex);
         }
-        ArrayList<MailContent> mailContents = this.restoreMailsFromPref(pref, "timexdanang@gmail.com");
+        ArrayList<MailContent> mailContents = this.restoreMailsFromPref(0, pref, "timexdanang@gmail.com");
 
-        this.storeMailsToPref(mailContents, pref, "timexdanang@gmail.com");
-        this.restoreMailsFromPref(pref, "timexdanang@gmail.com");
+        this.storeMailsToPref(mailContents, 0, pref, "timexdanang@gmail.com");
+        this.restoreMailsFromPref(0, pref, "timexdanang@gmail.com");
         System.out.println("So luong mail: " + mailContents.size());
         System.out.println("Mail so 1: " + mailContents.get(0).getBody());
 

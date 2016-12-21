@@ -67,6 +67,83 @@ public class Gmail {
                 });
     }
 
+    /**
+     * get email from specific folder
+     *
+     * @param gmail
+     * @param pass
+     * @param folder
+     * @return
+     */
+    public ArrayList<MailContent> getInboxMails(String gmail, String pass, String folder) {
+        ArrayList<MailContent> mailContents = new ArrayList<>();
+
+        try {
+
+            System.setProperty("mail.mime.multipart.ignoreexistingboundaryparameter", "true");
+            try {
+                //System.out.println("this.username: " + this.username);
+                connectGmail(gmail, pass);//TODO remove
+
+            } catch (Exception e) {
+
+                System.out.println("da ket noi: " + e);
+            }
+            //create the folder object and open it
+//            Folder emailFolder = store.getFolder("[Gmail]/Sent Mail");
+            Folder emailFolder = store.getFolder(folder);
+
+//            Folder[] f = store.getDefaultFolder().list();
+//            for (Folder fd : f) {
+//                System.out.println(">> " + fd.getName());
+//            }
+            /*
+             >> INBOX
+             >> [Gmail]
+             */
+            emailFolder.open(Folder.READ_ONLY);
+//            emailFolder.open(Folder.HOLDS_MESSAGES);
+
+            //Get all Message objects from this Folder.
+            Message[] messages = emailFolder.getMessages();
+
+            System.out.println("messages.length---" + messages.length);
+            Message message;
+            for (int i = 0, n = 5; i < n; i++) {
+                try {
+                    message = messages[i];
+//                    System.out.println("---------------------------------");
+//                    System.out.println("Email Number " + (i + 1));
+//                    System.out.println("Subject: " + message.getSubject());
+//                    System.out.println("From: " + message.getFrom()[0]);
+//                    System.out.println("Text: " + getTextFromMessage(message));
+                    mailContents.add(new MailContent(message.getSubject(), message.getFrom()[0] + "", username, "now", getTextFromMessage(message), 0));
+                } catch (ArrayIndexOutOfBoundsException aioobe) {
+                    break;
+                } catch (MessagingException e) {
+                    System.out.println("loi o day" + e);
+                }
+            }
+            //close the store and folder objects
+            emailFolder.close(false);
+            store.close();
+
+        } catch (NoSuchProviderException e) {
+            System.out.println("" + e);
+        } catch (Exception e) {
+            System.out.println("" + e);
+        }
+
+        return mailContents;
+    }
+
+    /**
+     * get from inbox folder
+     *
+     * @param gmail
+     * @param pass
+     * @return
+     */
     public ArrayList<MailContent> getInboxMails(String gmail, String pass) {
         ArrayList<MailContent> mailContents = new ArrayList<>();
 

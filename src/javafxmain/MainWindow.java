@@ -79,15 +79,20 @@ public class MainWindow extends Application {
 
     //Du lieu
     Gmail gmailHelper;
-    //ArrayList<MailContent> mailContents = new ArrayList<>();
+    //List items mail in Inbox folder
     ObservableList<MailContent> itemsEmail = FXCollections.observableArrayList();
-
+    //List items mail in SentMail folder
+    ObservableList<MailContent> itemsSentMail = FXCollections.observableArrayList();
+    //List items mail in Spam folder
+    ObservableList<MailContent> itemsSpamMail = FXCollections.observableArrayList();
     //Lay thong tin tu Preferences, neu ton tai thi hien thi
     Preferences pref = Preferences.userRoot().node(this.getClass().getName());
 
     //Mail offline
     StoreLocal storeMail = new StoreLocal();
-    ArrayList<MailContent> locallyMailContents;
+    ArrayList<MailContent> locallyInboxMailContents;
+    ArrayList<MailContent> locallySentMailContents;
+    ArrayList<MailContent> locallySpamMailContents;
 
     @Override
     public void start(Stage primaryStage) {
@@ -112,24 +117,12 @@ public class MainWindow extends Application {
         Image imgIcon = new Image(this.getClass().getResource("imgIcon.png").toString(), 20, 20, true, false);
         primaryStage.getIcons().add(imgIcon);
 
-//        try {
-//            long startTime = System.nanoTime();
-//            for (int i = 0; i < 100; i++) {
-//                //pref.get("ádfasdf", "ngudeotrai");
-//                System.out.println(""+pref.get("ádfasdf", "ngudeotraideotraideotraideotraideotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotraideotraiddeotraideotraideotraideotrai"));
-//            }
-//            long endTime = System.nanoTime();
-//            System.out.println("thoi gian: " + (endTime - startTime));
-//        } catch (Exception e) {
-//            System.out.println("loi pref");
-//        }
         initUI_Menubar();
 
         initUI_ContentPanel();
 
         initUI_BodyMail();
-        
-        
+
         primaryStage.setScene(scene);
         scene.getStylesheets().add(MainWindow.class.getResource("login.css").toExternalForm());
         primaryStage.show();
@@ -145,12 +138,14 @@ public class MainWindow extends Application {
 
         //storeMail.restoreMailsFromPref(pref, userName); get mail locally
         //load mail locally
-        locallyMailContents = storeMail.restoreMailsFromPref(pref, userName);//from the lastest session
-        itemsEmail = FXCollections.observableArrayList(locallyMailContents);
-        
+        //locallyMailContents = storeMail.restoreMailsFromPref(pref, userName);//from the lastest session
+        loadMailLocally();
+        itemsEmail = FXCollections.observableArrayList(locallyInboxMailContents);
+        itemsSentMail = FXCollections.observableArrayList(locallySentMailContents);
+        itemsSpamMail = FXCollections.observableArrayList(locallySpamMailContents);
+
         //old
         //itemsEmail = FXCollections.observableArrayList();//reset. if not: login session after a logout session will retain reloaded message
-
         //-------tool trip
         initUI_ToolTrip();
 
@@ -168,15 +163,83 @@ public class MainWindow extends Application {
         ((VBox) scene.getRoot()).getChildren().addAll(gridGontentPanel);
     }
 
+    void loadMailLocally() {
+        locallyInboxMailContents = storeMail.restoreMailsFromPref(0, pref, userName);//mails in Inbox folder from the lastest session
+        locallySentMailContents = storeMail.restoreMailsFromPref(1, pref, userName); //sent mails
+        locallySpamMailContents = storeMail.restoreMailsFromPref(2, pref, userName); //sent mails
+    }
+
+    void getSpamMails() {
+        Thread getSpamMail = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ArrayList<MailContent> spamMailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""), "[Gmail]/Sent Mail");
+
+                Platform.runLater(() -> {
+                    try {
+                        //cap nhat list mail
+                        itemsSpamMail.clear();
+                        itemsSpamMail.addAll(spamMailContents);
+
+                        MailContent firstMail = spamMailContents.get(0);
+                        tBoxFrom.setText("From: " + firstMail.getFrom());
+                        tBoxSubject.setText("Subject: " + firstMail.getSubject());
+                        tBoxDate.setText("Date: " + firstMail.getTime());
+                        taContent.setText(firstMail.getBody());
+
+                        //luu spam mail localy: type = 2
+                        storeMail.storeMailsToPref(spamMailContents, 2, pref, userName);
+
+                    } catch (Exception e) {
+                        System.out.println("Loi set noi dung mail sau khi get mail from server" + e);
+                    }
+                });
+            }
+        });
+
+        getSpamMail.start();
+    }
+
+    void getSentMails() {
+        Thread getSentMail = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ArrayList<MailContent> sentMailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""), "[Gmail]/Sent Mail");
+
+                Platform.runLater(() -> {
+                    try {
+                        //cap nhat list mail
+                        itemsSentMail.clear();
+                        itemsSentMail.addAll(sentMailContents);
+
+                        MailContent firstMail = sentMailContents.get(0);
+                        tBoxFrom.setText("From: " + firstMail.getFrom());
+                        tBoxSubject.setText("Subject: " + firstMail.getSubject());
+                        tBoxDate.setText("Date: " + firstMail.getTime());
+                        taContent.setText(firstMail.getBody());
+
+                        //luu sent mail localy: type = 1
+                        storeMail.storeMailsToPref(sentMailContents, 1, pref, userName);
+
+                        //get another mail folder
+                        getSpamMails();
+
+                    } catch (Exception e) {
+                        System.out.println("Loi set noi dung mail sau khi get mail from server" + e);
+                    }
+                });
+            }
+        });
+
+        getSentMail.start();
+    }
+
     void getInboxMails() {
         Thread getInbox = new Thread(new Runnable() {
             @Override
             public void run() {
 //                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
                 ArrayList<MailContent> mailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""));
-                //cache
-                //cache.put(keyCache, mailContents);
-                //cache
 
                 //parse ArrayList -> ObservableList
                 //new    
@@ -196,7 +259,6 @@ public class MainWindow extends Application {
                         itemsEmail.clear();
                         itemsEmail.addAll(mailContents);
 
-                       
                         MailContent firstMail = mailContents.get(0);
                         tBoxFrom.setText("From: " + firstMail.getFrom());
                         tBoxSubject.setText("Subject: " + firstMail.getSubject());
@@ -204,7 +266,10 @@ public class MainWindow extends Application {
                         taContent.setText(firstMail.getBody());
 
                         //luu mail localy
-                        storeMail.storeMailsToPref(mailContents, pref, userName);
+                        storeMail.storeMailsToPref(mailContents, 0, pref, userName);
+
+                        //get another mail folder
+                        getSentMails();
 
                     } catch (Exception e) {
                         System.out.println("Loi set noi dung mail sau khi get mail from server" + e);
@@ -253,24 +318,35 @@ public class MainWindow extends Application {
 
         listBox = new ListView<>();
         itemsBox = FXCollections.observableArrayList(
-                "Inbox", "Draft", "Important", "Sent", "Spam", "All");
+                "Inbox", "Sent", "Spam");
 
         listBox.setItems(itemsBox);
 
         listBox.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends String> ov, String old_val, String new_val) -> {
             textBoxName.setText(new_val);
+            switch (new_val) {
+                case "Inbox":
+                    listEmail.setItems(itemsEmail);
+                    break;
+                case "Sent":
+                    listEmail.setItems(itemsSentMail);
+                    break;
+                    case "Spam":
+                    listEmail.setItems(itemsSpamMail);
+                    break;
+            }
         });
 
         //6 images
         int imgScaleListBox = 30;
         Image image = new Image(this.getClass().getResource("imgInbox.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
-        Image image2 = new Image(this.getClass().getResource("imgDraft.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
-        Image image3 = new Image(this.getClass().getResource("imgImportant.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
-        Image image4 = new Image(this.getClass().getResource("imgSent.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
-        Image image5 = new Image(this.getClass().getResource("imgSpam.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
-        Image image6 = new Image(this.getClass().getResource("imgAll.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        //Image image2 = new Image(this.getClass().getResource("imgDraft.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        //Image image3 = new Image(this.getClass().getResource("imgImportant.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        Image image1 = new Image(this.getClass().getResource("imgSent.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        Image image2 = new Image(this.getClass().getResource("imgSpam.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
+        //Image image6 = new Image(this.getClass().getResource("imgAll.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
 
-        Image[] images = new Image[]{image, image2, image3, image4, image5, image6};
+        Image[] images = new Image[]{image, image1 ,image2};
         listBox.setCellFactory(itemsBox -> new ListCell<String>() {
             private ImageView imageView = new ImageView();
 
@@ -287,21 +363,21 @@ public class MainWindow extends Application {
                         case "Inbox":
                             imageView.setImage(images[0]);
                             break;
-                        case "Draft":
+//                        case "Draft":
+//                            imageView.setImage(images[1]);
+//                            break;
+//                        case "Important":
+//                            imageView.setImage(images[2]);
+//                            break;
+                        case "Sent":
                             imageView.setImage(images[1]);
                             break;
-                        case "Important":
+                        case "Spam":
                             imageView.setImage(images[2]);
                             break;
-                        case "Sent":
-                            imageView.setImage(images[3]);
-                            break;
-                        case "Spam":
-                            imageView.setImage(images[4]);
-                            break;
-                        case "All":
-                            imageView.setImage(images[5]);
-                            break;
+//                        case "All":
+//                            imageView.setImage(images[5]);
+//                            break;
                     }
                     setFont(new Font(20));
                     setText(name);
@@ -332,10 +408,14 @@ public class MainWindow extends Application {
         listEmail.setItems(itemsEmail);
 
         listEmail.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends MailContent> observable, MailContent oldValue, MailContent newValue) -> {
-            tBoxFrom.setText("From: " + newValue.getFrom());
-            tBoxSubject.setText("Subject: " + newValue.getSubject());
-            tBoxDate.setText("Date: " + newValue.getTime());
-            taContent.setText(newValue.getBody());
+            try {
+                tBoxFrom.setText("From: " + newValue.getFrom());
+                tBoxSubject.setText("Subject: " + newValue.getSubject());
+                tBoxDate.setText("Date: " + newValue.getTime());
+                taContent.setText(newValue.getBody());
+            } catch (NullPointerException npe) {
+                System.out.println("khong co emmails " + npe);
+            }
         });
 
         //with CustomCell
@@ -369,9 +449,9 @@ public class MainWindow extends Application {
         vBoxBodyEmail.getChildren().addAll(tBoxSubject, tBoxFrom, tBoxDate, taContent);
         VBox.setVgrow(taContent, Priority.ALWAYS);
         gridGontentPanel.add(vBoxBodyEmail, 2, 2);
-        
+
         //init first mail
-        MailContent firstMail = locallyMailContents.get(0);
+        MailContent firstMail = locallyInboxMailContents.get(0);
         tBoxFrom.setText("From: " + firstMail.getFrom());
         tBoxSubject.setText("Subject: " + firstMail.getSubject());
         tBoxDate.setText("Date: " + firstMail.getTime());

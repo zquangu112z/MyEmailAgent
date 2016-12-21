@@ -14,7 +14,7 @@ import java.io.Serializable;
 public class MailContent{
 
     String subject, from, to, time, body;
-    int type;//0: inbox 1: draft...
+    int type;//0: inbox 1: sentmail
 
     public MailContent(String subject, String from, String to, String time, String body, int type) {
         this.subject = subject;
