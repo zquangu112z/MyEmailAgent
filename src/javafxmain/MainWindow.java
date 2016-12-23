@@ -3,6 +3,8 @@ package javafxmain;
 import helper.Gmail;
 import helper.StoreLocal;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -64,6 +66,8 @@ public class MainWindow extends Application {
     Scene scene;
     Stage primaryStage;
 
+    Image imgLoading;
+
     //font
     Font font20 = new Font(20);
     Font font17 = new Font(17);
@@ -93,6 +97,8 @@ public class MainWindow extends Application {
     ArrayList<MailContent> locallyInboxMailContents;
     ArrayList<MailContent> locallySentMailContents;
     ArrayList<MailContent> locallySpamMailContents;
+    private ImageView ivLoading;
+    private Label tfLoading;
 
     @Override
     public void start(Stage primaryStage) {
@@ -114,6 +120,7 @@ public class MainWindow extends Application {
 
         scene = new Scene(new VBox(), 1000, 700);
         primaryStage.setTitle("Inbox");
+        System.out.println("" + this.getClass().getResource("imgIcon.png").toString());
         Image imgIcon = new Image(this.getClass().getResource("imgIcon.png").toString(), 20, 20, true, false);
         primaryStage.getIcons().add(imgIcon);
 
@@ -128,6 +135,9 @@ public class MainWindow extends Application {
         primaryStage.show();
     }
 
+    /**
+     * Giao dien content panel
+     */
     void initUI_ContentPanel() {
         gridGontentPanel = new GridPane();
         gridGontentPanel.setHgap(2);
@@ -136,9 +146,7 @@ public class MainWindow extends Application {
 
         gmailHelper = new Gmail();
 
-        //storeMail.restoreMailsFromPref(pref, userName); get mail locally
-        //load mail locally
-        //locallyMailContents = storeMail.restoreMailsFromPref(pref, userName);//from the lastest session
+        //load mail locally from the lastest session
         loadMailLocally();
         itemsEmail = FXCollections.observableArrayList(locallyInboxMailContents);
         itemsSentMail = FXCollections.observableArrayList(locallySentMailContents);
@@ -163,16 +171,24 @@ public class MainWindow extends Application {
         ((VBox) scene.getRoot()).getChildren().addAll(gridGontentPanel);
     }
 
+    /**
+     * load mail from Preference (the last session)
+     */
     void loadMailLocally() {
         locallyInboxMailContents = storeMail.restoreMailsFromPref(0, pref, userName);//mails in Inbox folder from the lastest session
         locallySentMailContents = storeMail.restoreMailsFromPref(1, pref, userName); //sent mails
-        locallySpamMailContents = storeMail.restoreMailsFromPref(2, pref, userName); //sent mails
+        locallySpamMailContents = storeMail.restoreMailsFromPref(2, pref, userName); //spam mails
     }
 
+    /**
+     * get spam folder mail
+     */
     void getSpamMails() {
+        tfLoading.setText("uploading spam folder");
         Thread getSpamMail = new Thread(new Runnable() {
             @Override
             public void run() {
+
                 ArrayList<MailContent> spamMailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""), "[Gmail]/Sent Mail");
 
                 Platform.runLater(() -> {
@@ -190,6 +206,11 @@ public class MainWindow extends Application {
                         //luu spam mail localy: type = 2
                         storeMail.storeMailsToPref(spamMailContents, 2, pref, userName);
 
+                        //finish load mail
+                        tfLoading.setText("");
+                        tfLoading.setVisible(false);
+                        ivLoading.setVisible(false);
+
                     } catch (Exception e) {
                         System.out.println("Loi set noi dung mail sau khi get mail from server" + e);
                     }
@@ -198,12 +219,42 @@ public class MainWindow extends Application {
         });
 
         getSpamMail.start();
+
+        setIntervalRenew();
     }
 
+    /**
+     * check new mail each 60s
+     */
+    void setIntervalRenew() {
+
+        Thread renewMail = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(60000);
+                    } catch (InterruptedException ex) {
+                        System.out.println("loi thread " + ex);
+                    }
+                    getInboxMails();
+                }
+            }
+        });
+
+        renewMail.start();
+    }
+
+    /**
+     * get sent mail folder
+     */
     void getSentMails() {
+        tfLoading.setText("uploading sent mail folder");
         Thread getSentMail = new Thread(new Runnable() {
             @Override
             public void run() {
+
                 ArrayList<MailContent> sentMailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""), "[Gmail]/Sent Mail");
 
                 Platform.runLater(() -> {
@@ -234,25 +285,20 @@ public class MainWindow extends Application {
         getSentMail.start();
     }
 
+    /**
+     * get Inbox mail folder
+     */
     void getInboxMails() {
+
+        tfLoading.setText("uploading inbox folder");
+        tfLoading.setVisible(true);
+        ivLoading.setVisible(true);
+
         Thread getInbox = new Thread(new Runnable() {
             @Override
             public void run() {
-//                ArrayList<MailContent> mailContents = gmailHelper.getInboxMails();
                 ArrayList<MailContent> mailContents = gmailHelper.getInboxMails(pref.get("userLogged", ""), pref.get("passLogged", ""));
 
-                //parse ArrayList -> ObservableList
-                //new    
-//                itemsEmail.clear();
-//                itemsEmail.addAll(mailContents);
-                //itemsEmail = FXCollections.observableArrayList(mailContents);
-                //listEmail.setItems(itemsEmail);//refresh 
-                //itemsEmail.notifyAll();
-                //old
-//                for (MailContent mc : mailContents) {
-//                    itemsEmail.add(mc);
-////                    Platform.runLater(() -> itemsEmail.add(mc));
-//                }
                 Platform.runLater(() -> {
                     try {
                         //cap nhat list mail
@@ -304,7 +350,13 @@ public class MainWindow extends Application {
         btnForward.setMinWidth(70);
         btnForward.setDisable(true);
 
-        hBoxQuickToolTrip.getChildren().addAll(btnCompose, btnReply, btnForward);
+        imgLoading = new Image(this.getClass().getResource("loading.gif").toString(), 20, 20, true, false);
+        ivLoading = new ImageView(imgLoading);
+
+        tfLoading = new Label("updating mail in inbox");
+        tfLoading.setFont(font17);
+
+        hBoxQuickToolTrip.getChildren().addAll(btnCompose, btnReply, btnForward, ivLoading, tfLoading);
 
         gridGontentPanel.add(hBoxQuickToolTrip, 0, 0, 3, 1);
     }
@@ -331,7 +383,7 @@ public class MainWindow extends Application {
                 case "Sent":
                     listEmail.setItems(itemsSentMail);
                     break;
-                    case "Spam":
+                case "Spam":
                     listEmail.setItems(itemsSpamMail);
                     break;
             }
@@ -346,7 +398,7 @@ public class MainWindow extends Application {
         Image image2 = new Image(this.getClass().getResource("imgSpam.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
         //Image image6 = new Image(this.getClass().getResource("imgAll.png").toString(), imgScaleListBox, imgScaleListBox, true, false);
 
-        Image[] images = new Image[]{image, image1 ,image2};
+        Image[] images = new Image[]{image, image1, image2};
         listBox.setCellFactory(itemsBox -> new ListCell<String>() {
             private ImageView imageView = new ImageView();
 
@@ -414,7 +466,7 @@ public class MainWindow extends Application {
                 tBoxDate.setText("Date: " + newValue.getTime());
                 taContent.setText(newValue.getBody());
             } catch (NullPointerException npe) {
-                System.out.println("khong co emmails " + npe);
+                System.out.println("Loi giao dien : khong co emmails " + npe);
             }
         });
 
@@ -433,6 +485,9 @@ public class MainWindow extends Application {
         gridGontentPanel.add(vBoxListEmail, 1, 2);
     }
 
+    /**
+     * init components of body of an email
+     */
     void initUI_BodyMail() {
         VBox vBoxBodyEmail = new VBox();
 
@@ -618,7 +673,7 @@ public class MainWindow extends Application {
     }
 
     /**
-     * Do: Luu thong tin, Chuyen sang man hinh Inbox
+     * Save information, switch GUI to InboxGUI
      *
      * @param event
      */
